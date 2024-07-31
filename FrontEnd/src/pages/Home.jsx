@@ -3,9 +3,30 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import LoginButton from "../components/LoginButton";
 import LogoutButton from "../components/LogoutButton";
+import axios from 'axios';
+import { useEffect } from "react";
 
 const Home = () => {
-  const { isAuthenticated } = useAuth0();
+  const { isAuthenticated, getIdTokenClaims, loginWithRedirect, logout } = useAuth0();
+
+  useEffect(() => {
+    async function sendTokenToBackend() {
+      if (isAuthenticated) {
+        try {
+          const claims = await getIdTokenClaims();
+          const id_token = claims.__raw;
+          const response = await axios.post('http://localhost:5001/api/auth/auth0-callback', { id_token });
+          console.log('User synchronized with backend:', response.data);
+        } catch (error) {
+          console.error('Error syncing user with backend:', error);
+        }
+      }
+    }
+    sendTokenToBackend();
+  }, [isAuthenticated, getIdTokenClaims]);
+
+  const { user } = useAuth0();
+  console.log(user);
 
   return (
     <motion.div 

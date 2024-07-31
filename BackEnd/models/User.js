@@ -8,11 +8,22 @@ const commentSchema = new mongoose.Schema({
 });
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  name: {type: String, required: true},
+  // cognome: {type: String},
+  // nickname: { type: String},
+  email: { type: String },
   profileImage: String,
   profilePublic: { type: Boolean, default: false },
+  authId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
   manga: [{
     manga: { type: mongoose.Schema.Types.ObjectId, ref: 'Manga' },
     readingStatus: { 

@@ -5,7 +5,10 @@ import cors from 'cors';
 import endpoints from 'express-list-endpoints';
 import mangaRoutes from './routes/mangaRoutes.js';
 import userRoutes from './routes/usersRoutes.js';  // Importa le nuove rotte utente
+import authRoutes from './routes/authRoutes.js'
 import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericErrorHandler } from './middlewares/errorHandlers.js';
+import { Strategy as Auth0Strategy } from 'passport-auth0';
+import passport from 'passport';
 
 dotenv.config();
 
@@ -20,7 +23,22 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connesso al database MongoDB'))
   .catch((err) => console.error('Errore di connessione al database:', err));
 
+  const auth0Strategy = new Auth0Strategy(
+    {
+        domain: process.env.AUTH0_DOMAIN,
+        clientID: process.env.AUTH0_CLIENT_ID,
+        clientSecret: process.env.AUTH0_CLIENT_SECRET,
+        callbackURL: process.env.AUTH0_CALLBACK_URL
+    },
+    (accessToken, refreshToken, extraParams, profile, done) => {
+        return done(null, profile);
+    }
+);
+
+app.use(passport.initialize());
+
 // Rotte
+app.use('/api/auth', authRoutes);
 app.use('/api/manga', mangaRoutes);
 app.use('/api/users', userRoutes);  // Aggiungi le rotte utente
 
@@ -44,20 +62,4 @@ app.listen(PORT, () => {
 });
 
 
-// const express = require('express');
 
-// const { auth } = require('express-oauth2-jwt-bearer');
-
-
-// const jwtCheck = auth({
-//   audience: 'https://Mangaist',
-//   issuerBaseURL: 'https://dev-6zpiulqlj7s17isb.eu.auth0.com/',
-//   tokenSigningAlg: 'RS256'
-// });
-
-// // enforce on all endpoints
-// app.use(jwtCheck);
-
-// app.get('/authorized', function (req, res) {
-//     res.send('Secured Resource');
-// });

@@ -2,18 +2,29 @@ import express from 'express';
 import User from '../models/User.js';
 import Manga from '../models/Manga.js';
 import cloudinaryUploader from '../config/cloudinaryConfig.js';
+import { authMiddleware, isAdmin } from '../middlewares/authMiddlewares.js'
 
 const router = express.Router();
 
-// GET tutti gli utenti
-router.get('/', async (req, res) => {
+// GET /users: Ottiene tutti gli utenti (solo per admin)
+router.get('/', authMiddleware, isAdmin, async (req, res) => {
   try {
-    const users = await User.find().select('-password'); // Esclude il campo password
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({message: error.message});
+      const users = await User.find().select('-password');
+      res.json(users);
+  } catch(err) {
+      res.status(500).json({ message: err.message });
   }
 });
+
+// GET tutti gli utenti
+// router.get('/', async (req, res) => {
+//   try {
+//     const users = await User.find().select('-password'); // Esclude il campo password
+//     res.json(users);
+//   } catch (error) {
+//     res.status(500).json({message: error.message});
+//   }
+// });
 
 // GET utente per ID
 router.get('/:id', async (req, res) => {
