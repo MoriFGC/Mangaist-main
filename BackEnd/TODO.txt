@@ -1,0 +1,2 @@
+fare l'hash della password
+impostare auth0 
