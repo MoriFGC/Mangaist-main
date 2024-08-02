@@ -3,16 +3,26 @@ import mongoose from "mongoose";
 
 const commentSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  text: String,
+  text: { type: String},
   createdAt: { type: Date, default: Date.now }
 });
+
+const favoritePanels = new mongoose.Schema({
+  panelImage: { type: String, required: true },
+  description: { type: String},
+  manga: { type: mongoose.Schema.Types.ObjectId, ref: 'Manga', index: true },
+  chapterNumber: {type: Number},
+  volumeNumber: {type: Number},
+  createdAt: { type: Date, default: Date.now },
+  comments: [commentSchema]
+})
 
 const userSchema = new mongoose.Schema({
   name: {type: String, required: true},
   cognome: {type: String},
   nickname: { type: String},
   email: { type: String },
-  profileImage: String,
+  profileImage: {type: String},
   profilePublic: { type: Boolean, default: false },
   authId: {
     type: String,
@@ -34,12 +44,13 @@ const userSchema = new mongoose.Schema({
     currentChapter: Number,
     currentVolume: Number
   }],
-  favoritePanels: [{
-    panelImage: String,
-    description: String,
-    manga: { type: mongoose.Schema.Types.ObjectId, ref: 'Manga' },
-    comments: [commentSchema]
-  }]
+  favoritePanels: [favoritePanels]
+  // favoritePanels: [{
+  //   panelImage: String,
+  //   description: String,
+  //   manga: { type: mongoose.Schema.Types.ObjectId, ref: 'Manga' },
+  //   comments: [commentSchema]
+  // }]
 }, {
   timestamps: true,
   collection: 'user'
