@@ -1,8 +1,8 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import LoginButton from "../components/LoginButton";
 import LogoutButton from "../components/LogoutButton";
+import Profile from '../components/Profile'
 import axios from 'axios';
 import { useEffect } from "react";
 
@@ -48,7 +48,7 @@ const Home = () => {
           animate={{ scale: 1 }}
         >
           <LogoutButton />
-          <Link to="/hello" className="mt-4 text-blue-500 hover:text-blue-700">Go to Hello World</Link>
+          <Profile />
         </motion.div>
       ) : (
         <motion.div

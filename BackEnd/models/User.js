@@ -9,8 +9,8 @@ const commentSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema({
   name: {type: String, required: true},
-  // cognome: {type: String},
-  // nickname: { type: String},
+  cognome: {type: String},
+  nickname: { type: String},
   email: { type: String },
   profileImage: String,
   profilePublic: { type: Boolean, default: false },
