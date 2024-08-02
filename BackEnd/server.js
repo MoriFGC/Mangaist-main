@@ -4,8 +4,9 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import endpoints from 'express-list-endpoints';
 import mangaRoutes from './routes/mangaRoutes.js';
-import userRoutes from './routes/usersRoutes.js';  // Importa le nuove rotte utente
-import authRoutes from './routes/authRoutes.js'
+import userRoutes from './routes/usersRoutes.js'; 
+import authRoutes from './routes/authRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericErrorHandler } from './middlewares/errorHandlers.js';
 import { Strategy as Auth0Strategy } from 'passport-auth0';
 import passport from 'passport';
@@ -41,6 +42,7 @@ app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api/manga', mangaRoutes);
 app.use('/api/users', userRoutes);  // Aggiungi le rotte utente
+app.use('/api/messages', messageRoutes);
 
 // Middleware di gestione errori
 app.use(badRequestHandler);
