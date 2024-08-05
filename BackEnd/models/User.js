@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
 
-
+// schema per i commenti dei post 
 const commentSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   text: { type: String},
   createdAt: { type: Date, default: Date.now }
-});
+}); 
 
+// schema per i post dell'utente con i suoi pannelli preferiti
 const favoritePanels = new mongoose.Schema({
   panelImage: { type: String, required: true },
   description: { type: String},
@@ -34,6 +35,7 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  profileCompleted: { type: Boolean, default: false },
   manga: [{
     manga: { type: mongoose.Schema.Types.ObjectId, ref: 'Manga' },
     readingStatus: { 

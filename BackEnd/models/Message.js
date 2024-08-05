@@ -8,4 +8,6 @@ const messageSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
+// schema per i messaggi social
+
 export default mongoose.model('Message', messageSchema);

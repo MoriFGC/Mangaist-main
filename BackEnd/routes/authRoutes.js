@@ -33,7 +33,8 @@ router.post('/auth0-callback', async (req, res) => {
         authId: userId,
         email: userEmail,
         name: decodedToken.name || decodedToken.nickname,
-        role: isAdminEmail(userEmail) ? 'admin' : 'user'
+        role: isAdminEmail(userEmail) ? 'admin' : 'user',
+        profileCompleted: false  // Aggiungi questo campo
       });
     } else {
       // Aggiorna il ruolo se l'email è nella lista admin e l'utente non è già admin
@@ -46,7 +47,9 @@ router.post('/auth0-callback', async (req, res) => {
     // Genera il tuo JWT interno
     const token = await generateJWT(user);
 
-    res.json({ token, user: { id: user._id, email: user.email, role: user.role } });
+    res.json({ token, user: { id: user._id, email: user.email, role: user.role,
+      profileCompleted: user.profileCompleted  // Aggiungi questo campo
+     } });
   } catch (error) {
     console.error("Errore durante l'autenticazione:", error);
     res.status(500).json({ message: "Errore durante l'autenticazione", error: error.message });

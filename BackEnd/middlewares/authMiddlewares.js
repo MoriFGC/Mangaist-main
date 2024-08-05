@@ -1,5 +1,5 @@
 import { verifyJWT } from '../utils/jwt.js';
-import User from '../models/User.js';  // Cambiato da Author a User
+import User from '../models/User.js'; 
 
 // Middleware di autenticazione
 export const authMiddleware = async (req, res, next) => {
@@ -17,7 +17,7 @@ export const authMiddleware = async (req, res, next) => {
       return res.status(401).send('Utente non trovato');
     }
 
-    req.user = user;  // Cambiato da author a user
+    req.user = user; 
     next();
   } catch (error) {
     res.status(401).send('Token non valido');
@@ -26,7 +26,7 @@ export const authMiddleware = async (req, res, next) => {
 
 // Middleware per verificare il ruolo admin
 export const isAdmin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {  // Cambiato da author a user
+  if (req.user && req.user.role === 'admin') {  
     next();
   } else {
     res.status(403).send('Accesso negato: richiesto ruolo admin');
