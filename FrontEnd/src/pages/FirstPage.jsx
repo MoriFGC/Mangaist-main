@@ -1,8 +1,5 @@
 // auth0 import
 import { useAuth0 } from "@auth0/auth0-react"
-import LoginButton from "../components/LoginButton";
-import LogoutButton from "../components/LogoutButton";
-import Profile from '../components/Profile'
 //axios import
 import axios from 'axios';
 // animation import
@@ -20,7 +17,7 @@ const FirstPage = () => {
   const { isAuthenticated, getIdTokenClaims } = useAuth0();
 
   
-  useEffect(() => {
+useEffect(() => {
     async function checkProfileCompletion() {
       if (isAuthenticated) {
         try {
@@ -59,36 +56,37 @@ const FirstPage = () => {
   }, [isAuthenticated, getIdTokenClaims]);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center"
-    >
-      <motion.h1 
-        initial={{ y: -50 }}
-        animate={{ y: 0 }}
-        className="text-3xl font-bold mb-4"
-      >
-        Welcome to our app!
-      </motion.h1>
-      {isAuthenticated ? (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-        >
-          <LogoutButton />
-          <Profile />
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-        >
-          <LoginButton />
-        </motion.div>
-      )}
-    </motion.div>
+    // <motion.div 
+    //   initial={{ opacity: 0 }}
+    //   animate={{ opacity: 1 }}
+    //   exit={{ opacity: 0 }}
+    //   className="flex flex-col items-center justify-center"
+    // >
+    //   <motion.h1 
+    //     initial={{ y: -50 }}
+    //     animate={{ y: 0 }}
+    //     className="text-3xl font-bold mb-4"
+    //   >
+    //     Welcome to our app!
+    //   </motion.h1>
+    //   {isAuthenticated ? (
+    //     <motion.div
+    //       initial={{ scale: 0 }}
+    //       animate={{ scale: 1 }}
+    //     >
+    //       <LogoutButton />
+    //       <Profile />
+    //     </motion.div>
+    //   ) : (
+    //     <motion.div
+    //       initial={{ scale: 0 }}
+    //       animate={{ scale: 1 }}
+    //     >
+    //       <LoginButton />
+    //     </motion.div>
+    //   )}
+    // </motion.div>
+    <div>ciao mondo</div>
   );
 };
 
