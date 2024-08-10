@@ -18,15 +18,22 @@ api.interceptors.request.use(
 );
 
 // User routes
-export const getUserProfile = () => api.get('/users/profile');
-export const updateUserProfile = (userId, userData) => api.patch(`/users/${userId}`, userData);
+export const getAllUsers = () => api.get('/users');
 export const getUserById = (id) => api.get(`/users/${id}`);
+export const updateUserProfile = (userId, userData) => api.patch(`/users/${userId}`, userData);
 export const updateUserProfileImage = (userId, imageData) => api.patch(`/users/${userId}/profileImage`, imageData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
 
 // Manga routes
 export const getAllManga = () => api.get('/manga');
+// In api.js
+export const getUserMangaProgress = (userId, mangaId) => {
+  return api.get(`/users/${userId}/manga/${mangaId}`);
+};
+
+// Get user's manga
+export const getUserManga = (userId) => api.get(`/users/${userId}/manga`);
 export const getMangaById = (id) => api.get(`/manga/${id}`);
 export const createManga = (mangaData) => api.post('/manga', mangaData);
 export const updateManga = (id, mangaData) => api.patch(`/manga/${id}`, mangaData);
@@ -34,17 +41,42 @@ export const deleteManga = (id) => api.delete(`/manga/${id}`);
 export const updateMangaCoverImage = (id, imageData) => api.patch(`/manga/${id}/coverImage`, imageData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
+// Add this function to your api.js file
+export const updateUserMangaProgress = (userId, mangaId, progressData) => {
+  return api.patch(`/users/${userId}/manga/${mangaId}/progress`, progressData);
+};
 
 // Character routes
-export const addCharacter = (mangaId, characterData) => api.post(`/manga/${mangaId}/characters`, characterData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
+export const addCharacter = (mangaId, characterData) => {
+  return api.post(`/manga/${mangaId}/characters`, characterData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).catch(error => {
+    console.error('Error in addCharacter:', error.response ? error.response.data : error.message);
+    throw error;
+  });
+};
 export const updateCharacter = (mangaId, characterId, characterData) => api.patch(`/manga/${mangaId}/characters/${characterId}`, characterData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
 
 // User's manga catalog routes
-export const addMangaToCatalog = (userId, mangaData) => api.post(`/users/${userId}/manga`, mangaData);
+export const addMangaToCatalog = (userId, mangaData) => {
+  const formData = new FormData();
+  Object.keys(mangaData).forEach(key => {
+    if (key === 'genre') {
+      mangaData[key].forEach(genre => formData.append('genre[]', genre));
+    } else if (key === 'coverImage' && mangaData[key]) {
+      formData.append(key, mangaData[key], mangaData[key].name);
+    } else {
+      formData.append(key, mangaData[key]);
+    }
+  });
+  return api.post(`/users/${userId}/manga`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+//export const addMangaToCatalog = (userId, mangaData) => api.post(`/users/${userId}/manga`, mangaData);
 export const removeMangaFromCatalog = (userId, mangaId) => api.delete(`/users/${userId}/manga/${mangaId}`);
 
 // Favorite panels routes

@@ -85,11 +85,11 @@ export default function Nav() {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
+              initial={{ opacity: 0, height: 0}}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
-              className="absolute top-full left-0 right-0 bg-black bg-opacity-90 overflow-hidden p-3" //todo coprire l'intera viewport
+              className="absolute top-full left-0 right-0 bg-black overflow-hidden p-3" //todo coprire l'intera viewport
             >
               {navItems.map((item, index) => (
                 <div className="bg-black p-3"

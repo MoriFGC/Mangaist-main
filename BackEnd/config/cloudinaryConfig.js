@@ -12,8 +12,9 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "blog_covers", // Nome della cartella su Cloudinary
-    allowed_formats: ["jpg", "png", "jpeg", "gif"], // Formati consentiti
+    folder: "manga_covers", // Puoi cambiare il nome della cartella se lo desideri
+    allowed_formats: ["jpg", "png", "jpeg", "webp"], // Modificato qui
+    transformation: [{ width: 500, height: 750, crop: "limit" }], // Opzionale: per standardizzare le dimensioni
   },
 });
 

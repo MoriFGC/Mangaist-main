@@ -133,27 +133,37 @@ router.patch('/:id/characters/:characterId', cloudinaryUploader.single('image'),
 });
 
 // POST aggiungi un nuovo personaggio con immagine
-router.post('/:id/characters', cloudinaryUploader.single('characterImage'), async (req, res) => {
+// Modifica la rotta per l'aggiunta di un personaggio
+router.post('/:id/characters', cloudinaryUploader.single('image'), async (req, res) => {
+  console.log('Received request to add character:');
+  console.log('Body:', req.body);
+  console.log('File:', req.file);
+  console.log('Manga ID:', req.params.id);
   try {
     const manga = await Manga.findById(req.params.id);
     if (!manga) {
+      console.log('Manga not found');
       return res.status(404).json({message: 'Manga non trovato'});
     }
 
     const newCharacter = {
       name: req.body.name,
+      description: req.body.description,
       image: req.file ? req.file.path : ''
     };
 
-    manga.characters.push(newCharacter);
-    await manga.save();
+    console.log('New character:', newCharacter);
 
-    res.status(201).json(manga);
+    manga.characters.push(newCharacter);
+    const updatedManga = await manga.save();
+
+    console.log('Manga updated successfully');
+    res.status(201).json(updatedManga);
   } catch (error) {
-    res.status(500).json({message: error.message});
+    console.error('Error adding character:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({message: error.message, stack: error.stack});
   }
 });
-
-
 
 export default router;

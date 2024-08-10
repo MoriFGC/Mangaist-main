@@ -122,51 +122,78 @@ router.delete('/:id', async (req, res) => {
 
 //------------------------ USER MANGA -----------------------------------------------
 
-// POST aggiungi manga al catalogo dell'utente
-router.post('/:id/manga', async (req, res) => {
-    try {
-      const user = await User.findById(req.params.id);
-      if (!user) {
-        return res.status(404).json({message: 'Utente non trovato'});
-      }
-  
-      let manga;
-      if (req.body.mangaId) {
-        // Se viene fornito un mangaId, aggiungi un manga esistente
-        manga = await Manga.findById(req.body.mangaId);
-        if (!manga) {
-          return res.status(404).json({message: 'Manga non trovato'});
-        }
-      } else {
-        // Se non viene fornito un mangaId, crea un nuovo manga personale
-        manga = new Manga({
-          title: req.body.title,
-          author: req.body.author,
-          description: req.body.description,
-          status: req.body.status,
-          volumes: req.body.volumes,
-          chapters: req.body.chapters,
-          genre: req.body.genre,
-          coverImage: req.body.coverImage,
-          isDefault: false
-        });
-        await manga.save();
-      }
-  
-      // Aggiungi il manga al catalogo dell'utente con lo stato di lettura fornito
-      user.manga.push({
-        manga: manga._id,
-        readingStatus: req.body.readingStatus || 'to-read', // Usa lo stato fornito o il default
-        currentChapter: req.body.currentChapter,
-        currentVolume: req.body.currentVolume
-      });
-  
-      const updatedUser = await user.save();
-      res.status(201).json(updatedUser.manga[updatedUser.manga.length - 1]);
-    } catch (error) {
-      res.status(400).json({message: error.message});
+router.get('/:userId/manga/:mangaId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({message: 'Utente non trovato'});
     }
-  });
+    const mangaProgress = user.manga.find(m => m.manga.toString() === req.params.mangaId);
+    if (!mangaProgress) {
+      return res.status(404).json({message: 'Manga non trovato per questo utente'});
+    }
+    res.json(mangaProgress);
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+});
+
+// GET manga di uno specifico utente
+router.get('/:id/manga', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).populate('manga.manga');
+    if (!user) {
+      return res.status(404).json({message: 'Utente non trovato'});
+    }
+    res.json(user.manga);
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+});
+
+// POST aggiungi manga al catalogo dell'utente
+
+router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({message: 'Utente non trovato'});
+    }
+
+    let mangaData = req.body;
+    if (req.file) {
+      mangaData.coverImage = req.file.path;
+    }
+
+    // Converti i campi necessari
+    if (mangaData.volumes) mangaData.volumes = Number(mangaData.volumes);
+    if (mangaData.chapters) mangaData.chapters = Number(mangaData.chapters);
+    if (mangaData.publicationYear) mangaData.publicationYear = Number(mangaData.publicationYear);
+
+    // Gestisci il campo genre
+    if (mangaData['genre[]']) {
+      mangaData.genre = Array.isArray(mangaData['genre[]']) ? mangaData['genre[]'] : [mangaData['genre[]']];
+      delete mangaData['genre[]'];
+    }
+
+    const manga = new Manga(mangaData);
+    await manga.save();
+
+    user.manga.push({
+      manga: manga._id,
+      readingStatus: 'to-read',
+      currentChapter: 0,
+      currentVolume: 0
+    });
+
+    await user.save();
+
+    res.status(201).json(manga);
+  } catch (error) {
+    console.error('Error adding manga:', error);
+    res.status(500).json({message: error.message});
+  }
+});
 
 // DELETE rimuovi manga dal catalogo dell'utente
 router.delete('/:userId/manga/:mangaId', async (req, res) => {
@@ -183,6 +210,33 @@ router.delete('/:userId/manga/:mangaId', async (req, res) => {
   }
 });
 
+//PATCH
+
+router.patch('/:userId/manga/:mangaId/progress', async (req, res) => {
+  try {
+    const { userId, mangaId } = req.params;
+    const { currentChapter, currentVolume } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Utente non trovato' });
+    }
+
+    const mangaIndex = user.manga.findIndex(m => m.manga.toString() === mangaId);
+    if (mangaIndex === -1) {
+      return res.status(404).json({ message: 'Manga non trovato nel catalogo dell\'utente' });
+    }
+
+    user.manga[mangaIndex].currentChapter = currentChapter;
+    user.manga[mangaIndex].currentVolume = currentVolume;
+
+    await user.save();
+
+    res.json(user.manga[mangaIndex]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 //-------------------------- USER PANEL ---------------------------
 
 // POST aggiungi un pannello preferito
