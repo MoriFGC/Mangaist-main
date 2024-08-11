@@ -1,6 +1,7 @@
 import express from 'express';
 import Manga from '../models/Manga.js';
 import cloudinaryUploader from '../config/cloudinaryConfig.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -84,12 +85,30 @@ router.patch('/:id', async (req, res) => {
 // DELETE manga
 router.delete('/:id', async (req, res) => {
   try {
-    const deletedManga = await Manga.findByIdAndDelete(req.params.id);
-    if (!deletedManga) {
+    const manga = await Manga.findById(req.params.id);
+    if (!manga) {
       return res.status(404).json({message: 'Manga non trovato'});
     }
-    res.json({message: 'Manga eliminato con successo'});
+
+    if (manga.isDefault) {
+      return res.status(403).json({message: 'Non è possibile eliminare un manga predefinito'});
+    }
+
+    // Elimina il manga dalla collezione globale
+    await Manga.findByIdAndDelete(req.params.id);
+
+    // Rimuovi il manga dai cataloghi di tutti gli utenti
+    const updateResult = await User.updateMany(
+      { 'manga.manga': req.params.id },
+      { $pull: { manga: { manga: req.params.id } } }
+    );
+
+    res.json({
+      message: 'Manga eliminato con successo dalla collezione globale e dai cataloghi degli utenti',
+      updatedUsers: updateResult.nModified
+    });
   } catch (error) {
+    console.error('Errore durante l\'eliminazione del manga:', error);
     res.status(500).json({message: error.message});
   }
 });

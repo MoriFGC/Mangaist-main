@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getMangaById, getUserMangaProgress, updateUserMangaProgress } from '../services/api';
+import { getMangaById, getUserMangaProgress } from '../services/api';
 import AddCharacterForm from '../components/singleManga/AddCharacterForm';
 import ProgressSelector from '../components/singleManga/ProgressSelector';
+import UpdateMangaForm from '../components/singleManga/UpdateMangaForm';
+import DeleteMangaButton from '../components/singleManga/DeleteMangaButton';
 
 export default function SingleManga() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [manga, setManga] = useState(null);
   const [userProgress, setUserProgress] = useState({ currentChapter: 0, currentVolume: 0 });
   const [userId, setUserId] = useState(null);
@@ -20,11 +23,9 @@ export default function SingleManga() {
         if (userData && userData.id) {
           setUserId(userData.id);
           
-          // Fetch manga data
           const mangaResponse = await getMangaById(id);
           setManga(mangaResponse.data);
 
-          // Fetch user's manga progress
           const progressResponse = await getUserMangaProgress(userData.id, id);
           if (progressResponse.data) {
             setUserProgress({
@@ -32,6 +33,8 @@ export default function SingleManga() {
               currentVolume: progressResponse.data.currentVolume || 0
             });
           }
+
+          console.log(userProgress);
         } else {
           console.error("User data not found in localStorage");
         }
@@ -44,21 +47,12 @@ export default function SingleManga() {
     fetchData();
   }, [id]);
 
-  const handleProgressUpdate = async (type, value) => {
-    try {
-      const updatedProgress = { ...userProgress, [type]: value };
-      setUserProgress(updatedProgress);
-      
-      if (userId && manga._id) {
-        const response = await updateUserMangaProgress(userId, manga._id, updatedProgress);
-        if (response.data) {
-          setUserProgress(response.data);
-        }
-      }
-    } catch (error) {
-      console.error('Error updating progress:', error);
-      setUserProgress(prevProgress => ({ ...prevProgress }));
-    }
+  const handleMangaUpdate = (updatedManga) => {
+    setManga(updatedManga);
+  };
+
+  const handleMangaDelete = () => {
+    navigate('/profile');
   };
 
   const handleCharacterAdded = async () => {
@@ -122,15 +116,28 @@ export default function SingleManga() {
           label="Current Chapter"
           current={userProgress.currentChapter}
           max={manga.chapters}
-          onChange={(value) => handleProgressUpdate('currentChapter', value)}
+          onChange={(value) => setUserProgress(prev => ({ ...prev, currentChapter: value }))}
         />
         <ProgressSelector 
           label="Current Volume"
           current={userProgress.currentVolume}
           max={manga.volumes}
-          onChange={(value) => handleProgressUpdate('currentVolume', value)}
+          onChange={(value) => setUserProgress(prev => ({ ...prev, currentVolume: value }))}
         />
       </motion.div>
+
+            {/* Update Manga Form */}
+            <UpdateMangaForm 
+        manga={manga}
+        onUpdate={handleMangaUpdate}
+      />
+
+      {/* Delete Manga Button */}
+      <DeleteMangaButton 
+        userId={userId}
+        mangaId={manga._id}
+        onDelete={handleMangaDelete}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

@@ -2,7 +2,7 @@ import express from 'express';
 import User from '../models/User.js';
 import Manga from '../models/Manga.js';
 import cloudinaryUploader from '../config/cloudinaryConfig.js';
-import { authMiddleware, isAdmin } from '../middlewares/authMiddlewares.js'
+import { authMiddleware, isAdmin, isAuthorizedForManga } from '../middlewares/authMiddlewares.js'
 
 const router = express.Router();
 
@@ -196,17 +196,31 @@ router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, r
 });
 
 // DELETE rimuovi manga dal catalogo dell'utente
-router.delete('/:userId/manga/:mangaId', async (req, res) => {
+router.delete('/:userId/manga/:mangaId', authMiddleware, isAuthorizedForManga, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({message: 'Utente non trovato'});
+    const { userId, mangaId } = req.params;
+    
+    // Rimuovi il manga dal catalogo dell'utente
+    const updateResult = await User.updateOne(
+      { _id: userId },
+      { $pull: { manga: { manga: mangaId } } }
+    );
+
+    if (updateResult.nModified === 0) {
+      return res.status(404).json({ message: 'Manga non trovato nel catalogo dell\'utente' });
     }
-    user.manga = user.manga.filter(m => m._id.toString() !== req.params.mangaId);
-    await user.save();
-    res.json({message: 'Manga rimosso dal catalogo dell\'utente'});
+
+    // Controlla se il manga è personale (non predefinito)
+    const manga = await Manga.findById(mangaId);
+    if (manga && !manga.isDefault) {
+      // Se è un manga personale, eliminalo dalla collezione globale
+      await Manga.findByIdAndDelete(mangaId);
+      res.json({ message: 'Manga rimosso dal catalogo dell\'utente e dalla collezione globale' });
+    } else {
+      res.json({ message: 'Manga rimosso dal catalogo dell\'utente' });
+    }
   } catch (error) {
-    res.status(400).json({message: error.message});
+    res.status(500).json({ message: error.message });
   }
 });
 

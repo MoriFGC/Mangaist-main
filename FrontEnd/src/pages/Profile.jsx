@@ -1,62 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { motion, useAnimation } from "framer-motion";
+import { motion } from "framer-motion";
 import { getUserById, getUserManga } from "../services/api";
 import { Link } from "react-router-dom";
-
-const AutoScrollingList = ({ children, className }) => {
-  const scrollRef = useRef(null);
-  const [shouldAnimate, setShouldAnimate] = useState(false);
-  const controls = useAnimation();
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      const { scrollWidth, clientWidth } = scrollRef.current;
-      setShouldAnimate(scrollWidth > clientWidth);
-    }
-  }, [children]);
-
-  useEffect(() => {
-    if (shouldAnimate) {
-      controls.start({
-        x: [0, -scrollRef.current.scrollWidth / 2],
-        transition: {
-          x: {
-            repeat: Infinity,
-            repeatType: "loop",
-            duration: 20,
-            ease: "linear",
-          },
-        },
-      });
-    }
-  }, [shouldAnimate, controls]);
-
-  return (
-    <div className={`overflow-hidden ${className}`}>
-      <motion.div
-        ref={scrollRef}
-        className="flex"
-        animate={controls}
-        onMouseEnter={() => controls.stop()}
-        onMouseLeave={() => shouldAnimate && controls.start({
-          x: [controls.get("x"), -scrollRef.current.scrollWidth / 2],
-          transition: {
-            x: {
-              repeat: Infinity,
-              repeatType: "loop",
-              duration: 20,
-              ease: "linear",
-            },
-          },
-        })}
-      >
-        {children}
-        {shouldAnimate && children} {/* Duplicate children for seamless loop */}
-      </motion.div>
-    </div>
-  );
-};
 
 const Profile = () => {
   const { user } = useAuth0();
@@ -115,12 +61,12 @@ const Profile = () => {
             View All Manga
           </Link>
         </div>
-        <AutoScrollingList className="pb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {userManga.map((manga, index) => (
             <motion.div
               key={index}
-              className="flex-shrink-0 w-40 mx-2"
               whileHover={{ scale: 1.05 }}
+              className="flex flex-col items-center"
             >
               <Link to={`/manga/${manga.manga._id}`}>
                 <img
@@ -128,11 +74,11 @@ const Profile = () => {
                   alt={manga.manga.title}
                   className="w-full h-56 object-cover rounded-lg mb-2"
                 />
-                <p className="text-sm font-semibold">{manga.manga.title}</p>
+                <p className="text-sm font-semibold text-center">{manga.manga.title}</p>
               </Link>
             </motion.div>
           ))}
-        </AutoScrollingList>
+        </div>
       </div>
 
       <div className="mb-8">
@@ -142,13 +88,13 @@ const Profile = () => {
             View All Panels
           </Link>
         </div>
-        <AutoScrollingList className="pb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {profile.favoritePanels &&
             profile.favoritePanels.map((panel, index) => (
               <motion.div
                 key={index}
-                className="flex-shrink-0 w-40 mx-2"
                 whileHover={{ scale: 1.05 }}
+                className="flex flex-col items-center"
               >
                 <Link to={`/panel/${panel._id}`}>
                   <img
@@ -156,13 +102,13 @@ const Profile = () => {
                     alt={`Panel from ${panel.manga?.title}`}
                     className="w-full h-56 object-cover rounded-lg mb-2"
                   />
-                  <p className="text-sm font-semibold">
+                  <p className="text-sm font-semibold text-center">
                     {panel.manga?.title} - Ch.{panel.chapterNumber}
                   </p>
                 </Link>
               </motion.div>
             ))}
-        </AutoScrollingList>
+        </div>
       </div>
     </motion.div>
   );

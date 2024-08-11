@@ -1,17 +1,71 @@
+import React, { useState, useEffect, useRef } from "react";
+import { motion, useAnimation } from "framer-motion";
 
-export default function ProgressSelector({ label, current, max, onChange }) {
-    return (
-      <div className="mb-4">
-        <label className="text-white mb-2 block">{label} ({current}/{max})</label>
-        <select 
-          value={current} 
-          onChange={(e) => onChange(parseInt(e.target.value))}
-          className="bg-gray-700 text-white rounded p-2 w-full"
-        >
-          {[...Array(max + 1).keys()].map(num => (
-            <option key={num} value={num}>{num}</option>
-          ))}
-        </select>
-      </div>
-    );
+const AutoScrollingList = ({ children, className }) => {
+  const scrollRef = useRef(null);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+  const controls = useAnimation();
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const { scrollWidth, clientWidth } = scrollRef.current;
+      setShouldAnimate(scrollWidth > clientWidth);
+    }
+  }, [children]);
+
+  useEffect(() => {
+    if (shouldAnimate && scrollRef.current) {
+      const animate = async () => {
+        await controls.start({
+          x: [-scrollRef.current.scrollWidth / 2, 0],
+          transition: {
+            x: {
+              repeat: Infinity,
+              repeatType: "loop",
+              duration: 20,
+              ease: "linear",
+            },
+          },
+        });
+      };
+      animate();
+    }
+  }, [shouldAnimate, controls]);
+
+  const handleMouseEnter = () => {
+    controls.stop();
   };
+
+  const handleMouseLeave = () => {
+    if (shouldAnimate && scrollRef.current) {
+      controls.start({
+        x: [-scrollRef.current.scrollWidth / 2, 0],
+        transition: {
+          x: {
+            repeat: Infinity,
+            repeatType: "loop",
+            duration: 20,
+            ease: "linear",
+          },
+        },
+      });
+    }
+  };
+
+  return (
+    <div className={`overflow-hidden ${className}`}>
+      <motion.div
+        ref={scrollRef}
+        className="flex"
+        animate={controls}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {children}
+        {shouldAnimate && children}
+      </motion.div>
+    </div>
+  );
+};
+
+export default AutoScrollingList;

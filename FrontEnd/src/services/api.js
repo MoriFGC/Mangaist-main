@@ -77,7 +77,24 @@ export const addMangaToCatalog = (userId, mangaData) => {
 };
 
 //export const addMangaToCatalog = (userId, mangaData) => api.post(`/users/${userId}/manga`, mangaData);
-export const removeMangaFromCatalog = (userId, mangaId) => api.delete(`/users/${userId}/manga/${mangaId}`);
+export const removeMangaFromUserCatalog = (userId, mangaId) => {
+  const token = localStorage.getItem("token");
+  return api.delete(`/users/${userId}/manga/${mangaId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+export const deleteMangaGlobally = (mangaId) => {
+  return api.delete(`/manga/${mangaId}`).then(response => {
+    console.log('Manga deleted globally:', response.data);
+    return response;
+  }).catch(error => {
+    console.error('Error deleting manga globally:', error);
+    throw error;
+  });
+};
 
 // Favorite panels routes
 export const addFavoritePanel = (userId, panelData) => api.post(`/users/${userId}/favoritePanels`, panelData, {
