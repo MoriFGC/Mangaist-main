@@ -15,7 +15,9 @@ const favoritePanels = new mongoose.Schema({
   chapterNumber: {type: Number},
   volumeNumber: {type: Number},
   createdAt: { type: Date, default: Date.now },
-  comments: [commentSchema]
+  comments: [commentSchema],
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 })
 
 const userSchema = new mongoose.Schema({
@@ -36,7 +38,7 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   },
   profileCompleted: { type: Boolean, default: false },
-  manga: [{
+manga: [{
     manga: { type: mongoose.Schema.Types.ObjectId, ref: 'Manga' },
     readingStatus: { 
       type: String, 
@@ -44,19 +46,13 @@ const userSchema = new mongoose.Schema({
       default: 'to-read' 
     },
     currentChapter: Number,
-    currentVolume: Number
+    currentVolume: Number,
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   }],
   favoritePanels: [favoritePanels]
-  // favoritePanels: [{
-  //   panelImage: String,
-  //   description: String,
-  //   manga: { type: mongoose.Schema.Types.ObjectId, ref: 'Manga' },
-  //   comments: [commentSchema]
-  // }]
 }, {
   timestamps: true,
   collection: 'user'
 });
-
 
 export default mongoose.model('User', userSchema);

@@ -6,6 +6,43 @@ import { authMiddleware, isAdmin, isAuthorizedForManga } from '../middlewares/au
 
 const router = express.Router();
 
+router.get('/public', async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('name nickname profileImage profilePublic manga favoritePanels')
+      .lean();
+    
+    const usersWithCounts = users.map(user => ({
+      _id: user._id,
+      name: user.name,
+      nickname: user.nickname,
+      profileImage: user.profileImage, // Aggiungi un'immagine predefinita se non è presente
+      profilePublic: user.profilePublic,
+      manga: user.profilePublic ? user.manga.length : null,
+      favoritePanels: user.profilePublic ? user.favoritePanels.length : null
+    }));
+
+    res.json(usersWithCounts);
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+});
+// In usersRoutes.js
+router.get('/public/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select('-password -email')
+      .populate('manga.manga')
+      .populate('favoritePanels');
+    if (!user) {
+      return res.status(404).json({message: 'Utente non trovato'});
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+});
+
 // GET /users: Ottiene tutti gli utenti (solo per admin)
 router.get('/', authMiddleware, isAdmin, async (req, res) => {
   try {
@@ -254,7 +291,7 @@ router.patch('/:userId/manga/:mangaId/progress', async (req, res) => {
 //-------------------------- USER PANEL ---------------------------
 
 // POST aggiungi un pannello preferito
-router.post('/:id/favoritePanels', cloudinaryUploader.single('panelImage'), async (req, res) => {
+router.post('/:id/favoritePanels', authMiddleware, cloudinaryUploader.single('panelImage'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -266,9 +303,12 @@ router.post('/:id/favoritePanels', cloudinaryUploader.single('panelImage'), asyn
     }
 
     const newPanel = {
-      panelImage: req.file.path,  // Cambiato da 'image' a 'panelImage'
+      panelImage: req.file.path,
       description: req.body.description,
-      manga: req.body.manga  // Cambiato da 'mangaId' a 'manga'
+      manga: req.body.manga,
+      chapterNumber: req.body.chapterNumber,
+      volumeNumber: req.body.volumeNumber,
+      user: req.user._id
     };
 
     user.favoritePanels.push(newPanel);
@@ -282,7 +322,7 @@ router.post('/:id/favoritePanels', cloudinaryUploader.single('panelImage'), asyn
 });
 
 // PATCH aggiorna un pannello preferito
-router.patch('/:userId/favoritePanels/:panelId', cloudinaryUploader.single('panelImage'), async (req, res) => {
+router.patch('/:userId/favoritePanels/:panelId', authMiddleware, cloudinaryUploader.single('panelImage'), async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) {
@@ -294,25 +334,47 @@ router.patch('/:userId/favoritePanels/:panelId', cloudinaryUploader.single('pane
       return res.status(404).json({message: 'Pannello preferito non trovato'});
     }
 
+    // Verifica che l'utente autenticato sia il proprietario del pannello
+    if (panel.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({message: 'Non autorizzato a modificare questo pannello'});
+    }
+
     if (req.file) {
-      panel.image = req.file.path;
+      panel.panelImage = req.file.path;
     }
-    if (req.body.description) {
-      panel.description = req.body.description;
-    }
-    if (req.body.mangaId) {
-      panel.manga = req.body.mangaId;
-    }
+    if (req.body.description) panel.description = req.body.description;
+    if (req.body.chapterNumber) panel.chapterNumber = req.body.chapterNumber;
+    if (req.body.volumeNumber) panel.volumeNumber = req.body.volumeNumber;
 
     await user.save();
-
-    const userResponse = user.toObject();
-    delete userResponse.password;
     res.json(panel);
   } catch (error) {
     res.status(500).json({message: error.message});
   }
 });
+
+// GET un pannello preferito specifico
+router.get('/:userId/favoritePanels/:panelId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select('-password')
+      .populate('favoritePanels.user', 'name nickname profileImage');
+    
+    if (!user) {
+      return res.status(404).json({message: 'Utente non trovato'});
+    }
+
+    const panel = user.favoritePanels.id(req.params.panelId);
+    if (!panel) {
+      return res.status(404).json({message: 'Pannello preferito non trovato'});
+    }
+
+    res.json(panel);
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+});
+
 
 // DELETE rimuovi un pannello preferito specifico
 router.delete('/:userId/favoritePanels/:panelId', async (req, res) => {
@@ -340,6 +402,68 @@ router.delete('/:userId/favoritePanels/:panelId', async (req, res) => {
     res.json({message: 'Pannello preferito rimosso con successo'});
   } catch (error) {
     console.error('Errore nella rimozione del pannello preferito:', error);
+    res.status(500).json({message: error.message});
+  }
+});
+
+// POST aggiungere un like a un pannello
+router.post('/:userId/favoritePanels/:panelId/like', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({message: 'Utente non trovato'});
+    }
+
+    const panel = user.favoritePanels.id(req.params.panelId);
+    if (!panel) {
+      return res.status(404).json({message: 'Pannello preferito non trovato'});
+    }
+
+    const likeIndex = panel.likes.indexOf(req.user._id);
+    let message;
+
+    if (likeIndex > -1) {
+      // L'utente ha già messo like, quindi lo rimuoviamo
+      panel.likes.splice(likeIndex, 1);
+      message = 'Like rimosso con successo';
+    } else {
+      // L'utente non ha ancora messo like, quindi lo aggiungiamo
+      panel.likes.push(req.user._id);
+      message = 'Like aggiunto con successo';
+    }
+
+    await user.save();
+
+    res.json({message, panel});
+  } catch (error) {
+    console.error('Errore nel toggle del like:', error);
+    res.status(500).json({message: error.message});
+  }
+});
+// POST aggiungere un commento a un pannello
+router.post('/:userId/favoritePanels/:panelId/comment', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({message: 'Utente non trovato'});
+    }
+
+    const panel = user.favoritePanels.id(req.params.panelId);
+    if (!panel) {
+      return res.status(404).json({message: 'Pannello preferito non trovato'});
+    }
+
+    const newComment = {
+      user: req.user._id,
+      text: req.body.text
+    };
+
+    panel.comments.push(newComment);
+    await user.save();
+
+    res.status(201).json({message: 'Commento aggiunto con successo', comment: newComment});
+  } catch (error) {
+    console.error('Errore nell\'aggiunta del commento:', error);
     res.status(500).json({message: error.message});
   }
 });

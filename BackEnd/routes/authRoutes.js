@@ -11,11 +11,56 @@ const isAdminEmail = (email) => {
     const adminEmail = process.env.ADMIN_EMAIL;
     return email.toLowerCase() === adminEmail.toLowerCase();
   };
+
 // Rotta per gestire il callback di Auth0 e creare/aggiornare l'utente nel tuo database
+// router.post('/auth0-callback', async (req, res) => {
+//   try {
+//     const { id_token } = req.body;
+//     // Verifica il token di Auth0
+//     const decodedToken = jwt.decode(id_token);
+
+//     if (!decodedToken) {
+//       return res.status(401).json({ message: 'Token non valido' });
+//     }
+
+//     const userEmail = decodedToken.email || null;
+//     const isAdmin = isAdminEmail(userEmail);
+//     const userId = decodedToken.sub; // Usa sempre 'sub' come identificatore univoco
+
+//     // Cerca l'utente nel database o creane uno nuovo
+//     let user = await User.findOne({ authId: userId });
+//     if (!user) {
+//       user = new User({
+//         authId: userId,
+//         email: userEmail,
+//         name: decodedToken.name || decodedToken.nickname,
+//         role: isAdminEmail(userEmail) ? 'admin' : 'user',
+//         profileCompleted: false  // Aggiungi questo campo
+//       });
+//     } else {
+//       // Aggiorna il ruolo se l'email è nella lista admin e l'utente non è già admin
+//       if (userEmail && isAdminEmail(userEmail) && user.role !== 'admin') {
+//         user.role = 'admin';
+//       }
+//     }
+//     await user.save();
+
+//     // Genera il tuo JWT interno
+//     const token = await generateJWT(user);
+
+//     res.json({ token, user: { id: user._id, email: user.email, role: user.role,
+//       profileCompleted: user.profileCompleted  // Aggiungi questo campo
+//      } });
+//   } catch (error) {
+//     console.error("Errore durante l'autenticazione:", error);
+//     res.status(500).json({ message: "Errore durante l'autenticazione", error: error.message });
+//   }
+// });
+
+
 router.post('/auth0-callback', async (req, res) => {
   try {
     const { id_token } = req.body;
-    // Verifica il token di Auth0
     const decodedToken = jwt.decode(id_token);
 
     if (!decodedToken) {
@@ -24,36 +69,54 @@ router.post('/auth0-callback', async (req, res) => {
 
     const userEmail = decodedToken.email || null;
     const isAdmin = isAdminEmail(userEmail);
-    const userId = decodedToken.sub; // Usa sempre 'sub' come identificatore univoco
+    const userId = decodedToken.sub;
 
-    // Cerca l'utente nel database o creane uno nuovo
+    // Usa le informazioni dal token decodificato
+    const userInfo = {
+      name: decodedToken.name || decodedToken.nickname,
+      email: decodedToken.email,
+      picture: decodedToken.picture
+    };
+
     let user = await User.findOne({ authId: userId });
     if (!user) {
       user = new User({
         authId: userId,
-        email: userEmail,
-        name: decodedToken.name || decodedToken.nickname,
-        role: isAdminEmail(userEmail) ? 'admin' : 'user',
-        profileCompleted: false  // Aggiungi questo campo
+        email: userInfo.email,
+        name: userInfo.name,
+        role: isAdmin ? 'admin' : 'user',
+        profileCompleted: false,
+        profileImage: userInfo.picture
       });
     } else {
       // Aggiorna il ruolo se l'email è nella lista admin e l'utente non è già admin
       if (userEmail && isAdminEmail(userEmail) && user.role !== 'admin') {
         user.role = 'admin';
       }
+      // Aggiorna l'immagine del profilo se è cambiata
+      if (user.profileImage !== userInfo.picture) {
+        user.profileImage = userInfo.picture;
+      }
     }
     await user.save();
 
-    // Genera il tuo JWT interno
     const token = await generateJWT(user);
 
-    res.json({ token, user: { id: user._id, email: user.email, role: user.role,
-      profileCompleted: user.profileCompleted  // Aggiungi questo campo
-     } });
+    res.json({ 
+      token, 
+      user: { 
+        id: user._id, 
+        email: user.email, 
+        role: user.role,
+        profileCompleted: user.profileCompleted,
+        profileImage: user.profileImage
+      } 
+    });
   } catch (error) {
     console.error("Errore durante l'autenticazione:", error);
     res.status(500).json({ message: "Errore durante l'autenticazione", error: error.message });
   }
 });
+
 
 export default router;

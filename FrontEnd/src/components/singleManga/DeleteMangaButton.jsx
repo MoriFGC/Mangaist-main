@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { removeMangaFromUserCatalog, deleteMangaGlobally } from '../../services/api';
+import { removeMangaFromUserCatalog, deleteManga } from '../../services/api';
 
 const DeleteMangaButton = ({ userId, mangaId, isDefault, onDelete }) => {
   const [isConfirming, setIsConfirming] = useState(false);
@@ -12,7 +12,7 @@ const DeleteMangaButton = ({ userId, mangaId, isDefault, onDelete }) => {
         await removeMangaFromUserCatalog(userId, mangaId);
       } else {
         // Se è un manga personale, eliminalo globalmente
-        const response = await deleteMangaGlobally(mangaId);
+        const response = await deleteManga(mangaId);
         console.log(response.data); // Questo mostrerà il numero di utenti aggiornati
       }
       onDelete();

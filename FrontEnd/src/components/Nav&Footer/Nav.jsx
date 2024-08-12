@@ -18,7 +18,7 @@ export default function Nav() {
   const navItems = [
     { name: "Home", href: "/home", icon: IoMdHome },
     { name: "Library", href: "/library", icon: IoLibrary },
-    { name: "Social", href: "/social", icon: IoPeople },
+    { name: "Social", href: "/users", icon: IoPeople },
   ];
 
   const socialItems = [

@@ -33,6 +33,8 @@ const Profile = () => {
     return <div className="text-white">Loading...</div>;
   }
 
+ 
+
   return (
     <motion.div
       initial={{ opacity: 0 }}

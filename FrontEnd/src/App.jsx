@@ -8,6 +8,8 @@ import AllManga from './pages/AllManga';
 import AllPanels from './pages/AllPanels';
 import SingleManga from './pages/SingleManga';
 import SinglePanel from './pages/SinglePanel';
+import PublicProfile from './pages/PublicProfile';
+import AllUsers from './pages/AllUsers';
 
 
 
@@ -28,6 +30,8 @@ function App() {
           <Route path="/all-panels" element={<AllPanels />} />
           <Route path="/manga/:id" element={<SingleManga />} />
           <Route path="/panel/:id" element={<SinglePanel />} />
+          <Route path="/user/:userId" element={<PublicProfile />} />
+          <Route path="/users" element={<AllUsers />} />
         </Routes>
     </Router>
   );

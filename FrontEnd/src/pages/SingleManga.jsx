@@ -6,6 +6,7 @@ import AddCharacterForm from '../components/singleManga/AddCharacterForm';
 import ProgressSelector from '../components/singleManga/ProgressSelector';
 import UpdateMangaForm from '../components/singleManga/UpdateMangaForm';
 import DeleteMangaButton from '../components/singleManga/DeleteMangaButton';
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function SingleManga() {
   const { id } = useParams();
@@ -14,6 +15,8 @@ export default function SingleManga() {
   const [userProgress, setUserProgress] = useState({ currentChapter: 0, currentVolume: 0 });
   const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const { user: currentUser } = useAuth0();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,29 +29,36 @@ export default function SingleManga() {
           const mangaResponse = await getMangaById(id);
           setManga(mangaResponse.data);
 
-          const progressResponse = await getUserMangaProgress(userData.id, id);
-          if (progressResponse.data) {
+          try {
+            const progressResponse = await getUserMangaProgress(userData.id, id);
+            if (progressResponse.data) {
+              setUserProgress({
+                currentChapter: progressResponse.data.currentChapter || 0,
+                currentVolume: progressResponse.data.currentVolume || 0
+              });
+            }
+          } catch (progressError) {
+            console.log("User progress not found, setting default values");
             setUserProgress({
-              currentChapter: progressResponse.data.currentChapter || 0,
-              currentVolume: progressResponse.data.currentVolume || 0
+              currentChapter: 0,
+              currentVolume: 0
             });
           }
-
-          console.log(userProgress);
         } else {
           console.error("User data not found in localStorage");
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching manga data:', error);
+        // Qui potresti gestire l'errore, ad esempio mostrando un messaggio all'utente
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
   }, [id]);
-
   const handleMangaUpdate = (updatedManga) => {
     setManga(updatedManga);
+    setIsEditing(false);
   };
 
   const handleMangaDelete = () => {
@@ -67,6 +77,8 @@ export default function SingleManga() {
   if (!manga) {
     return <div className="text-white">Manga not found</div>;
   }
+
+  const isOwner = currentUser && manga.createdBy === currentUser.sub;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -126,18 +138,32 @@ export default function SingleManga() {
         />
       </motion.div>
 
-            {/* Update Manga Form */}
+      {isOwner && (
+        <>
+          {isEditing ? (
             <UpdateMangaForm 
-        manga={manga}
-        onUpdate={handleMangaUpdate}
-      />
+              manga={manga}
+              onUpdate={handleMangaUpdate}
+              onCancel={() => setIsEditing(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
+            >
+              Edit Manga
+            </button>
+          )}
 
-      {/* Delete Manga Button */}
-      <DeleteMangaButton 
-        userId={userId}
-        mangaId={manga._id}
-        onDelete={handleMangaDelete}
-      />
+          <DeleteMangaButton 
+            userId={userId}
+            mangaId={manga._id}
+            onDelete={handleMangaDelete}
+          />
+
+          <AddCharacterForm mangaId={manga._id} onCharacterAdded={handleCharacterAdded} />
+        </>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -162,8 +188,6 @@ export default function SingleManga() {
           ))}
         </div>
       </motion.div>
-
-      <AddCharacterForm mangaId={manga._id} onCharacterAdded={handleCharacterAdded} />
     </div>
   );
 }
