@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../../assets/mori3.svg";
@@ -9,11 +9,33 @@ import { IoMdHome } from "react-icons/io";
 import { IoLibrary, IoPeople } from "react-icons/io5";
 import { BiLogoInstagramAlt } from "react-icons/bi";
 import { FaLinkedin, FaGithub } from "react-icons/fa";
+import { getUserById } from "../../services/api";
 
 export default function Nav() {
-  const { user } = useAuth0();
+  const { user: auth0User, isAuthenticated, isLoading } = useAuth0();
+  const [userData, setUserData] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth0();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (isAuthenticated && auth0User) {
+        try {
+          const storedUserData = JSON.parse(localStorage.getItem("userData"));
+          if (storedUserData && storedUserData.id) {
+            const response = await getUserById(storedUserData.id);
+            setUserData(response.data);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [isAuthenticated, auth0User]);
+
 
   const navItems = [
     { name: "Home", href: "/home", icon: IoMdHome },
@@ -48,7 +70,7 @@ export default function Nav() {
       <nav className="relative h-20 mx-auto max-w-7xl flex justify-between items-center px-4">
         {/* Immagine profilo a sinistra */}
         <div className="order-1">
-          {user ? <DropdownProfile /> : <LoginButton />}
+          {user ? <DropdownProfile userData={userData || auth0User} /> : <LoginButton />}
         </div>
 
         {/* Logo al centro */}

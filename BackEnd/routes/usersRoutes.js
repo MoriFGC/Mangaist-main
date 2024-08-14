@@ -66,12 +66,33 @@ router.get('/', authMiddleware, isAdmin, async (req, res) => {
 // GET utente per ID
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-      .select('-password')
-      .populate('favoritePanels.manga');  // Popola il campo manga nei pannelli preferiti
+    const user = await User.findOne({
+      $or: [
+        { _id: req.params.id },
+        { authId: req.params.id }
+      ]
+    }).select('-password').populate('favoritePanels.manga');
+
+    if (!req.params.id || req.params.id === 'undefined') {
+      return res.status(400).json({message: 'ID utente non valido'});
+    }
+
     if (!user) {
       return res.status(404).json({message: 'Utente non trovato'});
     }
+    
+    // Se il profilo non è pubblico e non è l'utente stesso che lo richiede, restituisci solo informazioni limitate
+    if (!user.profilePublic && req.user && req.user.id !== user.id) {
+      const limitedUser = {
+        _id: user._id,
+        name: user.name,
+        nickname: user.nickname,
+        profileImage: user.profileImage,
+        profilePublic: user.profilePublic
+      };
+      return res.json(limitedUser);
+    }
+    
     res.json(user);
   } catch (error) {
     res.status(500).json({message: error.message});
@@ -182,7 +203,14 @@ router.get('/:id/manga', async (req, res) => {
     if (!user) {
       return res.status(404).json({message: 'Utente non trovato'});
     }
-    res.json(user.manga);
+    // Restituisci solo i dati necessari per la visualizzazione pubblica
+    const publicMangaData = user.manga.map(item => ({
+      _id: item.manga._id,
+      title: item.manga.title,
+      coverImage: item.manga.coverImage,
+      author: item.manga.author
+    }));
+    res.json(publicMangaData);
   } catch (error) {
     res.status(500).json({message: error.message});
   }
@@ -212,6 +240,9 @@ router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, r
       mangaData.genre = Array.isArray(mangaData['genre[]']) ? mangaData['genre[]'] : [mangaData['genre[]']];
       delete mangaData['genre[]'];
     }
+
+    // Aggiungi l'ID dell'utente che sta creando il manga
+    mangaData.createdBy = user._id;
 
     const manga = new Manga(mangaData);
     await manga.save();

@@ -1,68 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { getMangaById, getUserMangaProgress } from '../services/api';
-import AddCharacterForm from '../components/singleManga/AddCharacterForm';
-import ProgressSelector from '../components/singleManga/ProgressSelector';
-import UpdateMangaForm from '../components/singleManga/UpdateMangaForm';
-import DeleteMangaButton from '../components/singleManga/DeleteMangaButton';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  getMangaById,
+  getUserMangaProgress,
+  updateUserMangaProgress,
+} from "../services/api";
+import AddCharacterForm from "../components/singleManga/AddCharacterForm";
+import ProgressSelector from "../components/singleManga/ProgressSelector";
+import UpdateMangaForm from "../components/singleManga/UpdateMangaForm";
+import DeleteMangaButton from "../components/singleManga/DeleteMangaButton";
 import { useAuth0 } from "@auth0/auth0-react";
 
 export default function SingleManga() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [manga, setManga] = useState(null);
-  const [userProgress, setUserProgress] = useState({ currentChapter: 0, currentVolume: 0 });
+  const [userProgress, setUserProgress] = useState({
+    currentChapter: 0,
+    currentVolume: 0,
+  });
   const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const { user: currentUser } = useAuth0();
+  const [isOwner, setIsOwner] = useState(false);
+  const [isCurrentUser, setIsCurrentUser] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const userData = JSON.parse(localStorage.getItem('userData'));
+        const userData = JSON.parse(localStorage.getItem("userData"));
         if (userData && userData.id) {
           setUserId(userData.id);
-          
+          setIsCurrentUser(userData.id === id); // Verifica se l'utente corrente è il proprietario del manga
+
           const mangaResponse = await getMangaById(id);
           setManga(mangaResponse.data);
 
-          try {
-            const progressResponse = await getUserMangaProgress(userData.id, id);
-            if (progressResponse.data) {
+          // Verifica se l'utente corrente è il proprietario del manga
+          setIsOwner(userData.id === mangaResponse.data.createdBy);
+
+          if (isCurrentUser) {
+            try {
+              const progressResponse = await getUserMangaProgress(
+                userData.id,
+                id
+              );
+              if (progressResponse.data) {
+                setUserProgress({
+                  currentChapter: progressResponse.data.currentChapter || 0,
+                  currentVolume: progressResponse.data.currentVolume || 0,
+                });
+              }
+            } catch (progressError) {
+              console.log("User progress not found, setting default values");
               setUserProgress({
-                currentChapter: progressResponse.data.currentChapter || 0,
-                currentVolume: progressResponse.data.currentVolume || 0
+                currentChapter: 0,
+                currentVolume: 0,
               });
             }
-          } catch (progressError) {
-            console.log("User progress not found, setting default values");
-            setUserProgress({
-              currentChapter: 0,
-              currentVolume: 0
-            });
           }
         } else {
           console.error("User data not found in localStorage");
         }
       } catch (error) {
-        console.error('Error fetching manga data:', error);
-        // Qui potresti gestire l'errore, ad esempio mostrando un messaggio all'utente
+        console.error("Error fetching manga data:", error);
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, isCurrentUser]);
+
+  const handleProgressChange = async (type, value) => {
+    const newProgress = { ...userProgress, [type]: value };
+    setUserProgress(newProgress);
+    try {
+      await updateUserMangaProgress(userId, manga._id, newProgress);
+    } catch (error) {
+      console.error("Error updating progress:", error);
+    }
+  };
+
   const handleMangaUpdate = (updatedManga) => {
     setManga(updatedManga);
     setIsEditing(false);
   };
 
   const handleMangaDelete = () => {
-    navigate('/profile');
+    navigate("/profile");
   };
 
   const handleCharacterAdded = async () => {
@@ -78,8 +105,6 @@ export default function SingleManga() {
     return <div className="text-white">Manga not found</div>;
   }
 
-  const isOwner = currentUser && manga.createdBy === currentUser.sub;
-
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div
@@ -90,11 +115,19 @@ export default function SingleManga() {
       >
         <div className="md:flex">
           <div className="md:flex-shrink-0">
-            <img className="h-48 w-full object-cover md:w-48" src={manga.coverImage} alt={manga.title} />
+            <img
+              className="h-48 w-full object-cover md:w-48"
+              src={manga.coverImage}
+              alt={manga.title}
+            />
           </div>
           <div className="p-8">
-            <div className="uppercase tracking-wide text-sm text-indigo-500 font-semibold">{manga.demographics}</div>
-            <h1 className="block mt-1 text-lg leading-tight font-medium text-white">{manga.title}</h1>
+            <div className="uppercase tracking-wide text-sm text-indigo-500 font-semibold">
+              {manga.demographics}
+            </div>
+            <h1 className="block mt-1 text-lg leading-tight font-medium text-white">
+              {manga.title}
+            </h1>
             <p className="mt-2 text-gray-400">By {manga.author}</p>
             <p className="mt-2 text-white">{manga.description}</p>
             <div className="mt-4">
@@ -102,7 +135,10 @@ export default function SingleManga() {
                 {manga.status}
               </span>
               {manga.genre.map((genre, index) => (
-                <span key={index} className="inline-block bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2">
+                <span
+                  key={index}
+                  className="inline-block bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2"
+                >
                   {genre}
                 </span>
               ))}
@@ -110,38 +146,61 @@ export default function SingleManga() {
             <div className="mt-4">
               <p className="text-white">Volumes: {manga.volumes}</p>
               <p className="text-white">Chapters: {manga.chapters}</p>
-              <p className="text-white">Publication Year: {manga.publicationYear}</p>
+              <p className="text-white">
+                Publication Year: {manga.publicationYear}
+              </p>
             </div>
           </div>
         </div>
       </motion.div>
 
       {/* Reading Progress section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="mt-8 bg-gray-700 rounded-lg p-6"
-      >
-        <h2 className="text-2xl font-bold text-white mb-4">Reading Progress</h2>
-        <ProgressSelector 
-          label="Current Chapter"
-          current={userProgress.currentChapter}
-          max={manga.chapters}
-          onChange={(value) => setUserProgress(prev => ({ ...prev, currentChapter: value }))}
-        />
-        <ProgressSelector 
-          label="Current Volume"
-          current={userProgress.currentVolume}
-          max={manga.volumes}
-          onChange={(value) => setUserProgress(prev => ({ ...prev, currentVolume: value }))}
-        />
-      </motion.div>
+      {isCurrentUser ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-8 bg-gray-700 rounded-lg p-6"
+        >
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Reading Progress
+          </h2>
+          <ProgressSelector
+            label="Chapters Read"
+            current={userProgress.currentChapter}
+            max={manga.chapters}
+            onChange={(value) => handleProgressChange("currentChapter", value)}
+          />
+          <ProgressSelector
+            label="Volumes Read"
+            current={userProgress.currentVolume}
+            max={manga.volumes}
+            onChange={(value) => handleProgressChange("currentVolume", value)}
+          />
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-8 bg-gray-700 rounded-lg p-6"
+        >
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Owner's Reading Progress
+          </h2>
+          <p className="text-white">
+            Chapters Read: {userProgress.currentChapter} / {manga.chapters}
+          </p>
+          <p className="text-white">
+            Volumes Read: {userProgress.currentVolume} / {manga.volumes}
+          </p>
+        </motion.div>
+      )}
 
       {isOwner && (
         <>
           {isEditing ? (
-            <UpdateMangaForm 
+            <UpdateMangaForm
               manga={manga}
               onUpdate={handleMangaUpdate}
               onCancel={() => setIsEditing(false)}
@@ -155,16 +214,18 @@ export default function SingleManga() {
             </button>
           )}
 
-          <DeleteMangaButton 
+          <DeleteMangaButton
             userId={userId}
             mangaId={manga._id}
             onDelete={handleMangaDelete}
           />
 
-          <AddCharacterForm mangaId={manga._id} onCharacterAdded={handleCharacterAdded} />
+          <AddCharacterForm
+            mangaId={manga._id}
+            onCharacterAdded={handleCharacterAdded}
+          />
         </>
       )}
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -179,9 +240,15 @@ export default function SingleManga() {
               whileHover={{ scale: 1.05 }}
               className="bg-gray-700 rounded-lg overflow-hidden shadow-lg"
             >
-              <img src={character.image} alt={character.name} className="w-full h-48 object-cover" />
+              <img
+                src={character.image}
+                alt={character.name}
+                className="w-full h-48 object-cover"
+              />
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-white">{character.name}</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  {character.name}
+                </h3>
                 <p className="text-sm text-gray-400">{character.description}</p>
               </div>
             </motion.div>

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getAllUsers } from "../services/api";
-import { FaLock } from "react-icons/fa";
 
 export default function AllUsers() {
   const [users, setUsers] = useState([]);
@@ -12,7 +11,7 @@ export default function AllUsers() {
     const fetchUsers = async () => {
       try {
         const response = await getAllUsers();
-        console.log("Users data:", response.data); // Aggiungi questo
+        console.log("Users data:", response.data);
         setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -37,7 +36,7 @@ export default function AllUsers() {
             whileHover={{ scale: 1.05 }}
             className="bg-gray-800 rounded-lg overflow-hidden shadow-lg"
           >
-            <Link to={`/user/${user._id}`}>
+            <Link to={`/profile/${user._id}`}>
               <img
                 src={user.profileImage}
                 alt={`${user.name}'s avatar`}
@@ -52,21 +51,12 @@ export default function AllUsers() {
                   {user.name}
                 </h2>
                 <p className="text-sm text-gray-400">@{user.nickname}</p>
-                {user.profilePublic ? (
-                  <>
-                    <p className="text-sm text-gray-400 mt-2">
-                      Manga: {user.manga}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Panels: {user.favoritePanels}
-                    </p>
-                  </>
-                ) : (
-                  <div className="flex items-center text-sm text-gray-400 mt-2">
-                    <FaLock className="mr-1" />
-                    Private Profile
-                  </div>
-                )}
+                <p className="text-sm text-gray-400 mt-2">
+                  Manga: {user.manga}
+                </p>
+                <p className="text-sm text-gray-400">
+                  Panels: {user.favoritePanels}
+                </p>
               </div>
             </Link>
           </motion.div>

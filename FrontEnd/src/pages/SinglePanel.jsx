@@ -8,26 +8,31 @@ import { useAuth0 } from "@auth0/auth0-react";
 export default function SinglePanel() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth0();
+
+  // Stati
   const [panel, setPanel] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editedDescription, setEditedDescription] = useState('');
-  const { user: currentUser } = useAuth0();
+  const [isOwner, setIsOwner] = useState(false);
 
+  // Effetto per caricare i dati del pannello e dell'utente
   useEffect(() => {
-    const fetchPanelAndUser = async () => {
+    async function fetchPanelAndUser() {
       try {
         const userData = JSON.parse(localStorage.getItem("userData"));
         if (userData && userData.id) {
           const panelData = await getPanelById(userData.id, id);
           setPanel(panelData.data);
           setEditedDescription(panelData.data.description);
-          
+
           if (panelData.data.user && panelData.data.user._id) {
             const userDetails = await getUserById(panelData.data.user._id);
             setUser(userDetails.data);
+            setIsOwner(userData.id === panelData.data.user._id);
           }
         }
       } catch (error) {
@@ -35,10 +40,12 @@ export default function SinglePanel() {
       } finally {
         setLoading(false);
       }
-    };
+    }
+
     fetchPanelAndUser();
   }, [id]);
 
+  // Gestori eventi
   const handleLike = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
@@ -46,16 +53,10 @@ export default function SinglePanel() {
         const response = await likePanel(userData.id, panel._id);
         if (response && response.panel) {
           setPanel(response.panel);
-          console.log(response.message);
-        } else {
-          console.error("Unexpected response format:", response);
         }
-      } else {
-        console.error("User data not found in localStorage");
       }
     } catch (error) {
       console.error("Error toggling like:", error);
-      // Qui potresti aggiungere un feedback visuale per l'utente
     }
   };
 
@@ -63,26 +64,26 @@ export default function SinglePanel() {
     e.preventDefault();
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      if (userData && userData.id) {
+      if (userData && userData.id && comment.trim()) {
         await commentPanel(userData.id, panel._id, { text: comment });
         const updatedPanel = await getPanelById(userData.id, id);
         setPanel(updatedPanel.data);
         setComment('');
-      } else {
-        console.error("User data not found in localStorage");
       }
     } catch (error) {
       console.error("Error commenting on panel:", error);
-      // Qui potresti aggiungere un feedback visuale per l'utente
     }
   };
 
   const handleEdit = async () => {
     try {
-      await updatePanel(user._id, panel._id, { description: editedDescription });
-      const updatedPanel = await getPanelById(user._id, id);
-      setPanel(updatedPanel.data);
-      setIsEditing(false);
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      if (userData && userData.id) {
+        await updatePanel(userData.id, panel._id, { description: editedDescription });
+        const updatedPanel = await getPanelById(userData.id, id);
+        setPanel(updatedPanel.data);
+        setIsEditing(false);
+      }
     } catch (error) {
       console.error("Error updating panel:", error);
     }
@@ -90,22 +91,18 @@ export default function SinglePanel() {
 
   const handleDelete = async () => {
     try {
-      await deletePanel(user._id, panel._id);
-      navigate('/profile'); // Redirect to profile after deletion
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      if (userData && userData.id) {
+        await deletePanel(userData.id, panel._id);
+        navigate('/profile');
+      }
     } catch (error) {
       console.error("Error deleting panel:", error);
     }
   };
 
-  if (loading) {
-    return <div className="text-white">Loading...</div>;
-  }
-
-  if (!panel || !user) {
-    return <div className="text-white">Panel or user not found</div>;
-  }
-
-  const isOwner = currentUser && panel.user._id === currentUser.sub;
+  if (loading) return <div className="text-white">Loading...</div>;
+  if (!panel || !user) return <div className="text-white">Panel or user not found</div>;
 
   return (
     <motion.div
@@ -114,6 +111,7 @@ export default function SinglePanel() {
       exit={{ opacity: 0 }}
       className="max-w-2xl mx-auto bg-gray-900 text-white p-4 border-b border-gray-800"
     >
+      {/* Header con informazioni utente */}
       <div className="flex items-start mb-4">
         <img
           src={user.profileImage || "/placeholder-avatar.jpg"}
@@ -125,7 +123,8 @@ export default function SinglePanel() {
           <p className="text-gray-400">@{user.nickname}</p>
         </div>
       </div>
-      
+
+      {/* Descrizione del pannello (modalità modifica o visualizzazione) */}
       {isEditing ? (
         <div>
           <textarea
@@ -143,26 +142,29 @@ export default function SinglePanel() {
       ) : (
         <p className="mb-4">{panel.description}</p>
       )}
-      
+
+      {/* Immagine del pannello */}
       <img
         src={panel.panelImage}
         alt={`Panel from ${panel.manga?.title}`}
         className="w-full rounded-lg mb-4"
       />
-      
+
+      {/* Informazioni sul manga */}
       <p className="text-gray-400 mb-4">
         From {panel.manga?.title}, Chapter {panel.chapterNumber}
       </p>
 
+      {/* Pulsanti di interazione (like, commenti, modifica, elimina) */}
       <div className="flex justify-between text-gray-400">
-      <motion.button 
-      whileHover={{ scale: 1.1 }} 
-      onClick={handleLike} 
-      className="flex items-center"
-    >
-      <FaHeart className={`mr-2 ${panel.likes.includes(currentUser?.sub) ? 'text-red-500' : 'text-gray-400'}`} />
-      <span>{panel.likes.length} Likes</span>
-    </motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.1 }} 
+          onClick={handleLike} 
+          className="flex items-center"
+        >
+          <FaHeart className={`mr-2 ${panel.likes.includes(currentUser?.sub) ? 'text-red-500' : 'text-gray-400'}`} />
+          <span>{panel.likes.length} Likes</span>
+        </motion.button>
         <motion.button whileHover={{ scale: 1.1 }} className="flex items-center">
           <FaRegComment className="mr-2" />
           <span>{panel.comments.length} Comments</span>
@@ -181,6 +183,7 @@ export default function SinglePanel() {
         )}
       </div>
 
+      {/* Form per aggiungere un commento */}
       <form onSubmit={handleComment} className="mt-4">
         <input
           type="text"
@@ -194,6 +197,7 @@ export default function SinglePanel() {
         </button>
       </form>
 
+      {/* Sezione commenti */}
       <div className="mt-4">
         <h3 className="text-lg font-bold mb-2">Comments</h3>
         {panel.comments.map((comment, index) => (

@@ -4,7 +4,7 @@ const characterSchema = new mongoose.Schema({
   name: { type: String, required: true }, 
   image: { type: String },
   description: { type: String }
-}); // lo schema per i personaggi del manga
+});
 
 const mangaSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -24,12 +24,13 @@ const mangaSchema = new mongoose.Schema({
   }],
   coverImage: { type: String },
   dateAdded: { type: Date, default: Date.now },
-  isDefault: { type: Boolean, default: false }, // se è true allora è della collezzione predefinita se no è dell'utente
+  isDefault: { type: Boolean, default: false },
   publicationYear: { type: Number },
   demographics: { 
     type: String, 
     enum: ['Shonen', 'Seinen', 'Shoujo', 'Josei']
-  }
+  },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // Aggiungiamo questo campo
 }, {
   timestamps: true,
   collection: 'manga'

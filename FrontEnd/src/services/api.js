@@ -30,9 +30,11 @@ export const getPublicUserProfile = (userId) => api.get(`/users/public/${userId}
 export const getAllUsers = () => api.get('/users/public');
 export const getUserById = (id) => api.get(`/users/${id}`);
 export const updateUserProfile = (userId, userData) => api.patch(`/users/${userId}`, userData);
-export const updateUserProfileImage = (userId, imageData) => api.patch(`/users/${userId}/profileImage`, imageData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
+export const updateUserProfileImage = (userId, imageData) => {
+  return api.patch(`/users/${userId}/profileImage`, imageData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
 
 // Manga routes
 export const getAllManga = () => api.get('/manga');
@@ -71,11 +73,20 @@ export const getUserMangaProgress = async (userId, mangaId) => {
       // Se il manga non è trovato per l'utente, restituiamo un oggetto con valori predefiniti
       return { data: { currentChapter: 0, currentVolume: 0 } };
     }
-    throw error;  // Rilanciamo altri tipi di errori
+    console.error('Error fetching user manga progress:', error);
+    return { data: { currentChapter: 0, currentVolume: 0 } };
   }
 };
-export const updateUserMangaProgress = (userId, mangaId, progressData) => api.patch(`/users/${userId}/manga/${mangaId}/progress`, progressData);
 
+export const updateUserMangaProgress = async (userId, mangaId, progressData) => {
+  try {
+    const response = await api.patch(`/users/${userId}/manga/${mangaId}/progress`, progressData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating manga progress:', error);
+    throw error;
+  }
+};
 // Character routes
 export const addCharacter = (mangaId, characterData) => {
   return api.post(`/manga/${mangaId}/characters`, characterData, {
