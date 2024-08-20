@@ -21,6 +21,10 @@ const FirstPage = () => {
           const claims = await getIdTokenClaims();
           // Invia il token ID al backend per la verifica e ottiene i dati dell'utente
           const userData = await auth0Callback({ id_token: claims.__raw });
+
+          // Salva i dati dell'utente nel localStorage
+          localStorage.setItem("userData", JSON.stringify(userData));
+          console.log(userData);
           
           // Controlla se il profilo è completo
           if (!userData.profileCompleted) {

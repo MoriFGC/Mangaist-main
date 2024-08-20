@@ -23,9 +23,11 @@ export default function Nav() {
       if (isAuthenticated && auth0User) {
         try {
           const storedUserData = JSON.parse(localStorage.getItem("userData"));
+          console.log(storedUserData);
           if (storedUserData && storedUserData.id) {
             const response = await getUserById(storedUserData.id);
             setUserData(response.data);
+            console.log(userData);
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
