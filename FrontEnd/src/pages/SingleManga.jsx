@@ -1,3 +1,4 @@
+// Importazioni necessarie per il componente
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -13,19 +14,25 @@ import DeleteMangaButton from "../components/singleManga/DeleteMangaButton";
 import { useAuth0 } from "@auth0/auth0-react";
 
 export default function SingleManga() {
+  // Estrae l'ID del manga dall'URL
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // Stati per gestire i dati del manga e il progresso dell'utente
   const [manga, setManga] = useState(null);
   const [userProgress, setUserProgress] = useState({
     currentChapter: 0,
     currentVolume: 0,
   });
+  
+  // Altri stati per gestire vari aspetti del componente
   const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
 
+  // Effetto per caricare i dati del manga e il progresso dell'utente
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -33,15 +40,21 @@ export default function SingleManga() {
         const userData = JSON.parse(localStorage.getItem("userData"));
         if (userData && userData.id) {
           setUserId(userData.id);
-          setIsCurrentUser(userData.id === id); // Verifica se l'utente corrente è il proprietario del manga
+          
+          // PROBLEMA: Questa comparazione non è corretta
+          // setIsCurrentUser(userData.id === id);
+          // Il 'id' qui è l'ID del manga, non l'ID dell'utente
+          // Dovremmo confrontare con l'ID del creatore del manga
 
           const mangaResponse = await getMangaById(id);
           setManga(mangaResponse.data);
 
-          // Verifica se l'utente corrente è il proprietario del manga
+          // CORREZIONE: Confrontiamo l'ID dell'utente con l'ID del creatore del manga
+          setIsCurrentUser(userData.id === mangaResponse.data.createdBy);
           setIsOwner(userData.id === mangaResponse.data.createdBy);
 
-          if (isCurrentUser) {
+          // Recuperiamo il progresso solo se l'utente è il proprietario
+          if (userData.id === mangaResponse.data.createdBy) {
             try {
               const progressResponse = await getUserMangaProgress(
                 userData.id,
@@ -71,8 +84,8 @@ export default function SingleManga() {
       }
     };
     fetchData();
-  }, [id, isCurrentUser]);
-
+  }, [id]); // Rimuoviamo isCurrentUser dalle dipendenze per evitare loop
+  // Gestore per l'aggiornamento del progresso di lettura
   const handleProgressChange = async (type, value) => {
     const newProgress = { ...userProgress, [type]: value };
     setUserProgress(newProgress);
@@ -83,28 +96,36 @@ export default function SingleManga() {
     }
   };
 
+  // Gestore per l'aggiornamento dei dati del manga
   const handleMangaUpdate = (updatedManga) => {
     setManga(updatedManga);
     setIsEditing(false);
   };
 
+  // Gestore per l'eliminazione del manga
   const handleMangaDelete = () => {
     const userData = JSON.parse(localStorage.getItem("userData"));
     navigate(`/profile/${userData.id}`);
   };
 
+  // Gestore per l'aggiunta di un nuovo personaggio
   const handleCharacterAdded = async () => {
     const response = await getMangaById(id);
     setManga(response.data);
   };
 
+  // Mostra un indicatore di caricamento mentre i dati vengono recuperati
   if (isLoading) {
     return <div className="text-white">Loading...</div>;
   }
 
+  // Se il manga non è stato trovato, mostra un messaggio
   if (!manga) {
     return <div className="text-white">Manga not found</div>;
   }
+
+  console.log(isCurrentUser);
+  // Rendering del componente
 
   return (
     <div className="container mx-auto px-4 py-8">

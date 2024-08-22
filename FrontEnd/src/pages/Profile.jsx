@@ -1,3 +1,6 @@
+// Profile.jsx
+
+// Importazioni necessarie per il componente
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,32 +12,41 @@ import CreateMangaDialog from "../components/profile/CreateMangaDialog";
 import CreatePanelDialog from "../components/profile/CreatePanelDialog";
 
 const Profile = () => {
+  // Estrae l'ID dall'URL
   const { id } = useParams();
+  
+  // Stati per gestire i dati del profilo e dei manga dell'utente
   const [profile, setProfile] = useState(null);
   const [userManga, setUserManga] = useState([]);
+  
+  // Stati per gestire l'apertura dei vari dialog
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth0();
-  // Aggiungiamo uno stato per gestire il caricamento
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Nuovi stati per controllare l'apertura dei dialog di creazione
   const [isCreateMangaDialogOpen, setIsCreateMangaDialogOpen] = useState(false);
   const [isCreatePanelDialogOpen, setIsCreatePanelDialogOpen] = useState(false);
+  
+  // Utilizzo di Auth0 per l'autenticazione
+  const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth0();
+  
+  // Stato per gestire il caricamento dei dati
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Funzione per recuperare i dati del profilo e dei manga dell'utente
   const fetchProfileAndManga = useCallback(async () => {
-    // Verifichiamo se l'autenticazione è ancora in corso
+    // Se l'autenticazione è in corso, non fare nulla
     if (authLoading) return;
 
     try {
       setIsLoading(true);
-      // Recuperiamo i dati dell'utente dal localStorage come fallback
+      // Recupera i dati dell'utente dal localStorage come fallback
       const storedUserData = JSON.parse(localStorage.getItem("userData"));
-      // Usiamo l'id dal parametro, o l'id memorizzato, o 'me' come fallback
+      // Usa l'ID dall'URL, o l'ID memorizzato, o 'me' come fallback
       const userId = id || storedUserData?.id || 'me';
       
+      // Recupera i dati del profilo
       const profileData = await getUserById(userId);
       setProfile(profileData.data);
       
+      // Recupera i manga dell'utente
       const mangaData = await getUserManga(profileData.data._id);
       setUserManga(mangaData.data.filter((item) => item.manga !== null));
     } catch (error) {
@@ -44,10 +56,12 @@ const Profile = () => {
     }
   }, [id, authLoading]);
 
+  // Effetto per caricare i dati del profilo e dei manga all'avvio del componente
   useEffect(() => {
     fetchProfileAndManga();
   }, [fetchProfileAndManga]);
 
+  // Gestore per l'aggiornamento del profilo
   const handleProfileUpdate = async (updatedProfile) => {
     setProfile(updatedProfile);
     setIsUpdateDialogOpen(false);
@@ -62,27 +76,23 @@ const Profile = () => {
     await fetchProfileAndManga();
   };
 
-    // Funzioni per gestire la creazione di nuovi manga e pannelli
-    const handleMangaCreation = async (newManga) => {
-      // Implementare la logica per aggiungere il nuovo manga al profilo
-      // e aggiornare lo stato userManga
-      setIsCreateMangaDialogOpen(false);
-      await fetchProfileAndManga(); // Ricarica i dati del profilo e dei manga
-    };
+  // Gestori per la creazione di nuovi manga e pannelli
+  const handleMangaCreation = async (newManga) => {
+    setIsCreateMangaDialogOpen(false);
+    await fetchProfileAndManga();
+  };
   
-    const handlePanelCreation = async (newPanel) => {
-      // Implementare la logica per aggiungere il nuovo pannello al profilo
-      // e aggiornare lo stato profile.favoritePanels
-      setIsCreatePanelDialogOpen(false);
-      await fetchProfileAndManga(); // Ricarica i dati del profilo
-    };
+  const handlePanelCreation = async (newPanel) => {
+    setIsCreatePanelDialogOpen(false);
+    await fetchProfileAndManga();
+  };
 
-  // Mostriamo un indicatore di caricamento mentre i dati vengono recuperati
+  // Mostra un indicatore di caricamento mentre i dati vengono recuperati
   if (isLoading || authLoading) {
     return <div className="text-white">Loading...</div>;
   }
 
-  // Se il profilo non è stato trovato dopo il caricamento, mostriamo un messaggio
+  // Se il profilo non è stato trovato, mostra un messaggio
   if (!profile) {
     return <div className="text-white">Profile not found</div>;
   }
@@ -90,6 +100,7 @@ const Profile = () => {
   // Verifica se l'utente autenticato è il proprietario del profilo
   const isProfileOwner = isAuthenticated && authUser && authUser.sub === profile.authId;
 
+  // Rendering del componente
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -97,6 +108,7 @@ const Profile = () => {
       exit={{ opacity: 0 }}
       className="text-white p-4"
     >
+      {/* Sezione del profilo */}
       <h1 className="text-2xl font-bold mb-4">Profile</h1>
       <div className="mb-8">
         <img
@@ -119,6 +131,7 @@ const Profile = () => {
         )}
       </div>
 
+      {/* Pulsanti per aggiungere manga e pannelli (solo per il proprietario del profilo) */}
       {isProfileOwner && (
         <div className="mt-4 space-x-2">
           <button
@@ -136,6 +149,7 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Sezione dei manga dell'utente */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">My Manga</h2>
@@ -163,6 +177,7 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Sezione dei pannelli preferiti */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Favorite Panels</h2>
@@ -193,6 +208,7 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Dialog per l'aggiornamento del profilo e la creazione di manga e pannelli */}
       {isProfileOwner && (
         <>
         <UpdateProfileDialog
@@ -210,7 +226,7 @@ const Profile = () => {
         isOpen={isCreatePanelDialogOpen}
         closeModal={() => setIsCreatePanelDialogOpen(false)}
         onPanelCreation={handlePanelCreation}
-        userManga={userManga} // Passa la lista dei manga dell'utente per selezionare a quale manga appartiene il pannello
+        userManga={userManga}
       />
       </>
       )}
