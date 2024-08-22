@@ -11,18 +11,32 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [userManga, setUserManga] = useState([]);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const { user: authUser, isAuthenticated } = useAuth0();
+  const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth0();
+  // Aggiungiamo uno stato per gestire il caricamento
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfileAndManga = useCallback(async () => {
+    // Verifichiamo se l'autenticazione è ancora in corso
+    if (authLoading) return;
+
     try {
-      const profileData = await getUserById(id);
+      setIsLoading(true);
+      // Recuperiamo i dati dell'utente dal localStorage come fallback
+      const storedUserData = JSON.parse(localStorage.getItem("userData"));
+      // Usiamo l'id dal parametro, o l'id memorizzato, o 'me' come fallback
+      const userId = id || storedUserData?.id || 'me';
+      
+      const profileData = await getUserById(userId);
       setProfile(profileData.data);
-      const mangaData = await getUserManga(id);
+      
+      const mangaData = await getUserManga(profileData.data._id);
       setUserManga(mangaData.data.filter((item) => item.manga !== null));
     } catch (error) {
       console.error("Error fetching profile or manga:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [id]);
+  }, [id, authLoading]);
 
   useEffect(() => {
     fetchProfileAndManga();
@@ -42,13 +56,18 @@ const Profile = () => {
     await fetchProfileAndManga();
   };
 
-  if (!profile) {
+  // Mostriamo un indicatore di caricamento mentre i dati vengono recuperati
+  if (isLoading || authLoading) {
     return <div className="text-white">Loading...</div>;
   }
-  console.log(profile);
- 
-    // Verifica se l'utente autenticato è il proprietario del profilo
-    const isProfileOwner = isAuthenticated && authUser && authUser.sub === profile.authId;
+
+  // Se il profilo non è stato trovato dopo il caricamento, mostriamo un messaggio
+  if (!profile) {
+    return <div className="text-white">Profile not found</div>;
+  }
+
+  // Verifica se l'utente autenticato è il proprietario del profilo
+  const isProfileOwner = isAuthenticated && authUser && authUser.sub === profile.authId;
 
   return (
     <motion.div

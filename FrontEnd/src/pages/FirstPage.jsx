@@ -9,13 +9,13 @@ const FirstPage = () => {
   // Hook per la navigazione programmatica
   const navigate = useNavigate();
   // Ottiene lo stato di autenticazione e una funzione per ottenere i claims del token
-  const { isAuthenticated, getIdTokenClaims } = useAuth0();
+  const { isAuthenticated, getIdTokenClaims, isLoading } = useAuth0();
 
   // Effetto per controllare se il profilo dell'utente è completo
   useEffect(() => {
     async function checkProfileCompletion() {
       // Esegui solo se l'utente è autenticato
-      if (isAuthenticated) {
+      if (isAuthenticated && !isLoading) {
         try {
           // Ottiene i claims del token ID
           const claims = await getIdTokenClaims();
@@ -32,7 +32,7 @@ const FirstPage = () => {
             navigate('/complete-profile');
           } else {
             // Se il profilo è completo, reindirizza alla home o a un'altra pagina appropriata
-            navigate('/home');
+            window.location.href = '/home';
           }
         } catch (error) {
           console.error('Error checking profile completion:', error);
@@ -41,7 +41,7 @@ const FirstPage = () => {
     }
     // Esegui la funzione di controllo
     checkProfileCompletion();
-  }, [isAuthenticated, getIdTokenClaims, navigate]);  // Dipendenze dell'effetto
+  }, [isAuthenticated, getIdTokenClaims, navigate, isLoading]);  // Dipendenze dell'effetto
 
   // Renderizza il contenuto della pagina
   return (
