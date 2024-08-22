@@ -225,6 +225,9 @@ router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, r
       return res.status(404).json({message: 'Utente non trovato'});
     }
 
+    console.log('Received manga data:', req.body);
+    console.log('Received file:', req.file);
+
     let mangaData = req.body;
     if (req.file) {
       mangaData.coverImage = req.file.path;
@@ -244,6 +247,8 @@ router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, r
     // Aggiungi l'ID dell'utente che sta creando il manga
     mangaData.createdBy = user._id;
 
+    console.log('Processed manga data:', mangaData);
+
     const manga = new Manga(mangaData);
     await manga.save();
 
@@ -259,7 +264,7 @@ router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, r
     res.status(201).json(manga);
   } catch (error) {
     console.error('Error adding manga:', error);
-    res.status(500).json({message: error.message});
+    res.status(500).json({message: error.message, stack: error.stack});
   }
 });
 
@@ -324,6 +329,10 @@ router.patch('/:userId/manga/:mangaId/progress', async (req, res) => {
 // POST aggiungi un pannello preferito
 router.post('/:id/favoritePanels', authMiddleware, cloudinaryUploader.single('panelImage'), async (req, res) => {
   try {
+    // Log dei dati ricevuti per debug
+    console.log('Received panel data:', req.body);
+    console.log('Received file:', req.file);
+
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({message: 'Utente non trovato'});

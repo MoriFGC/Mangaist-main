@@ -49,18 +49,22 @@ export const updateMangaCoverImage = (id, imageData) => api.patch(`/manga/${id}/
 // User's manga catalog routes
 export const getUserManga = (userId) => api.get(`/users/${userId}/manga`);
 export const addMangaToCatalog = (userId, mangaData) => {
-  const formData = new FormData();
-  Object.keys(mangaData).forEach(key => {
-    if (key === 'genre') {
-      mangaData[key].forEach(genre => formData.append('genre[]', genre));
-    } else if (key === 'coverImage' && mangaData[key]) {
-      formData.append(key, mangaData[key], mangaData[key].name);
-    } else {
-      formData.append(key, mangaData[key]);
-    }
-  });
-  return api.post(`/users/${userId}/manga`, formData, {
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+  if (!mangaData) {
+    throw new Error('Manga data is required');
+  }
+  
+  // Log dei dati inviati per debug
+  console.log('Sending manga data:', mangaData);
+
+  return api.post(`/users/${userId}/manga`, mangaData, {
     headers: { 'Content-Type': 'multipart/form-data' }
+  }).catch(error => {
+    // Log dettagliato dell'errore
+    console.error('Error in addMangaToCatalog:', error.response ? error.response.data : error.message);
+    throw error;
   });
 };
 export const removeMangaFromUserCatalog = (userId, mangaId) => api.delete(`/users/${userId}/manga/${mangaId}`);
@@ -98,9 +102,33 @@ export const updateCharacter = (mangaId, characterId, characterData) => api.patc
 });
 
 // Favorite panels routes
-export const addFavoritePanel = (userId, panelData) => api.post(`/users/${userId}/favoritePanels`, panelData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
+// Funzione per aggiungere un pannello preferito
+
+// Funzione asincrona per aggiungere un pannello preferito
+export const addFavoritePanel = async (userId, panelData) => {
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+  if (!panelData) {
+    throw new Error('Panel data is required');
+  }
+
+  try {
+    // Log dei dati inviati per debug
+    console.log('Sending panel data:', panelData);
+
+    const response = await api.post(`/users/${userId}/favoritePanels`, panelData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    return response.data;
+  } catch (error) {
+    // Log dettagliato dell'errore
+    console.error('Error in addFavoritePanel:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
 export const updateFavoritePanel = (userId, panelId, panelData) => api.patch(`/users/${userId}/favoritePanels/${panelId}`, panelData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });

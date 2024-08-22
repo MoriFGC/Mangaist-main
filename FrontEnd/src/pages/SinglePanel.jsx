@@ -94,7 +94,7 @@ export default function SinglePanel() {
       const userData = JSON.parse(localStorage.getItem("userData"));
       if (userData && userData.id) {
         await deletePanel(userData.id, panel._id);
-        navigate('/profile');
+        navigate(`/profile/${userData.id}`);
       }
     } catch (error) {
       console.error("Error deleting panel:", error);

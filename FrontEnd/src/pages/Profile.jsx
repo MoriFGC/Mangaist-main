@@ -5,6 +5,8 @@ import { getUserById, getUserManga } from "../services/api";
 import { Link } from "react-router-dom";
 import UpdateProfileDialog from "../components/profile/UpdateProfileDialog";
 import { useAuth0 } from "@auth0/auth0-react";
+import CreateMangaDialog from "../components/profile/CreateMangaDialog";
+import CreatePanelDialog from "../components/profile/CreatePanelDialog";
 
 const Profile = () => {
   const { id } = useParams();
@@ -14,6 +16,10 @@ const Profile = () => {
   const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth0();
   // Aggiungiamo uno stato per gestire il caricamento
   const [isLoading, setIsLoading] = useState(true);
+
+  // Nuovi stati per controllare l'apertura dei dialog di creazione
+  const [isCreateMangaDialogOpen, setIsCreateMangaDialogOpen] = useState(false);
+  const [isCreatePanelDialogOpen, setIsCreatePanelDialogOpen] = useState(false);
 
   const fetchProfileAndManga = useCallback(async () => {
     // Verifichiamo se l'autenticazione è ancora in corso
@@ -56,6 +62,21 @@ const Profile = () => {
     await fetchProfileAndManga();
   };
 
+    // Funzioni per gestire la creazione di nuovi manga e pannelli
+    const handleMangaCreation = async (newManga) => {
+      // Implementare la logica per aggiungere il nuovo manga al profilo
+      // e aggiornare lo stato userManga
+      setIsCreateMangaDialogOpen(false);
+      await fetchProfileAndManga(); // Ricarica i dati del profilo e dei manga
+    };
+  
+    const handlePanelCreation = async (newPanel) => {
+      // Implementare la logica per aggiungere il nuovo pannello al profilo
+      // e aggiornare lo stato profile.favoritePanels
+      setIsCreatePanelDialogOpen(false);
+      await fetchProfileAndManga(); // Ricarica i dati del profilo
+    };
+
   // Mostriamo un indicatore di caricamento mentre i dati vengono recuperati
   if (isLoading || authLoading) {
     return <div className="text-white">Loading...</div>;
@@ -97,6 +118,23 @@ const Profile = () => {
           </button>
         )}
       </div>
+
+      {isProfileOwner && (
+        <div className="mt-4 space-x-2">
+          <button
+            onClick={() => setIsCreateMangaDialogOpen(true)}
+            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+          >
+            Add Manga
+          </button>
+          <button
+            onClick={() => setIsCreatePanelDialogOpen(true)}
+            className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded"
+          >
+            Add Panel
+          </button>
+        </div>
+      )}
 
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
@@ -156,12 +194,25 @@ const Profile = () => {
       </div>
 
       {isProfileOwner && (
+        <>
         <UpdateProfileDialog
           isOpen={isUpdateDialogOpen}
           closeModal={() => setIsUpdateDialogOpen(false)}
           user={profile}
           onProfileUpdate={handleProfileUpdate}
         />
+        <CreateMangaDialog
+        isOpen={isCreateMangaDialogOpen}
+        closeModal={() => setIsCreateMangaDialogOpen(false)}
+        onMangaCreation={handleMangaCreation}
+      />
+      <CreatePanelDialog
+        isOpen={isCreatePanelDialogOpen}
+        closeModal={() => setIsCreatePanelDialogOpen(false)}
+        onPanelCreation={handlePanelCreation}
+        userManga={userManga} // Passa la lista dei manga dell'utente per selezionare a quale manga appartiene il pannello
+      />
+      </>
       )}
 
     </motion.div>

@@ -89,7 +89,8 @@ export default function SingleManga() {
   };
 
   const handleMangaDelete = () => {
-    navigate("/profile");
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    navigate(`/profile/${userData.id}`);
   };
 
   const handleCharacterAdded = async () => {
