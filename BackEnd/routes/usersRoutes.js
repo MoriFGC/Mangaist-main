@@ -420,7 +420,8 @@ router.get('/panels/:panelId', async (req, res) => {
   try {
     const users = await User.find({ 'favoritePanels._id': req.params.panelId })
       .select('favoritePanels.$')
-      .populate('favoritePanels.user', 'name nickname profileImage');
+      .populate('favoritePanels.user', 'name nickname profileImage')
+      .populate('favoritePanels.comments.user', 'name nickname profileImage');
 
     if (users.length === 0 || users[0].favoritePanels.length === 0) {
       return res.status(404).json({message: 'Pannello non trovato'});
@@ -484,8 +485,9 @@ router.post('/panels/:panelId/like', authMiddleware, async (req, res) => {
 
     await user.save();
 
-    // Popola i dati dell'utente
+    // Popola i dati dell'utente e i dati degli utenti nei commenti
     await user.populate('favoritePanels.user', 'name nickname profileImage');
+    await user.populate('favoritePanels.comments.user', 'name nickname profileImage');
 
     res.json({ message: 'Like aggiornato con successo', panel: currentPanel });
   } catch (error) {

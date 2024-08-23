@@ -1,6 +1,6 @@
 // Importazioni necessarie per il componente
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getPanelById, likePanel, commentPanel, updatePanel, deletePanel } from "../services/api";
 import { FaHeart, FaRegComment, FaEdit, FaTrash } from 'react-icons/fa';
@@ -62,9 +62,16 @@ const handleLike = async () => {
   try {
     const response = await likePanel(panel._id);
     if (response && response.data && response.data.panel) {
+      // Preserviamo i dati degli utenti nei commenti
+      const updatedComments = panel.comments.map(comment => ({
+        ...comment,
+        user: comment.user // Manteniamo i dati dell'utente originali
+      }));
+      
       setPanel(prevPanel => ({
         ...prevPanel,
         ...response.data.panel,
+        comments: updatedComments, // Usiamo i commenti aggiornati
         user: {
           ...prevPanel.user,
           ...response.data.panel.user
@@ -82,14 +89,8 @@ const handleComment = async (e) => {
     if (comment.trim()) {
       const response = await commentPanel(panel._id, { text: comment });
       if (response && response.data && response.data.panel) {
-        setPanel(prevPanel => ({
-          ...prevPanel,
-          ...response.data.panel,
-          user: {
-            ...prevPanel.user,
-            ...response.data.panel.user
-          }
-        }));
+        const updatedPanel = await getPanelById(panel._id);
+        setPanel(updatedPanel.data);
         setComment('');
       }
     }
@@ -143,15 +144,18 @@ const handleComment = async (e) => {
     >
       {/* Header con informazioni utente */}
       <div className="flex items-start mb-4">
-        <img
-          src={panel.user.profileImage || "/placeholder-avatar.jpg"}
-          alt={`${panel.user.name}'s Avatar`}
-          className="w-12 h-12 rounded-full mr-4"
-        />
-        <div>
-          <h2 className="font-bold">{panel.user.name}</h2>
-          <p className="text-gray-400">@{panel.user.nickname}</p>
-        </div>
+        <Link to={`/profile/${panel.user._id}`}>
+          <img
+            src={panel.user.profileImage || "/placeholder-avatar.jpg"}
+            alt={`${panel.user.name}'s Avatar`}
+            className="w-12 h-12 rounded-full mr-4"
+          />
+          <div>
+            <h2 className="font-bold">{panel.user.name}</h2>
+            <p className="text-gray-400">@{panel.user.nickname}</p>
+          </div>
+        </Link>
+        
       </div>
 
       {/* Descrizione del pannello (modalità modifica o visualizzazione) */}
@@ -227,16 +231,27 @@ const handleComment = async (e) => {
         </button>
       </form>
 
-      {/* Sezione commenti */}
-      <div className="mt-4">
-        <h3 className="text-lg font-bold mb-2">Comments</h3>
-        {panel.comments.map((comment, index) => (
-          <div key={index} className="mb-2">
-            <p className="font-bold">{comment.user.name}</p>
+    {/* Sezione commenti */}
+    <div className="mt-4">
+      <h3 className="text-lg font-bold mb-2">Comments</h3>
+      {panel.comments.map((comment, index) => (
+        <div key={index} className="mb-2 flex items-center">
+          <Link to={`/profile/${comment.user._id}`}>
+            <img 
+              src={comment.user.profileImage || "/placeholder-avatar.jpg"} 
+              alt={`${comment.user.name}'s avatar`}
+              className="w-8 h-8 rounded-full mr-2"
+            />
+          </Link>
+          <div>
+            <Link to={`/profile/${comment.user._id}`} className="font-bold hover:underline">
+              {comment.user.name}
+            </Link>
             <p>{comment.text}</p>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
+    </div>
     </motion.div>
   );
 }
