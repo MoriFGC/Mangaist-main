@@ -1,99 +1,126 @@
+// Importazioni necessarie per il componente
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getPanelById, getUserById, likePanel, commentPanel, updatePanel, deletePanel } from "../services/api";
+import { getPanelById, likePanel, commentPanel, updatePanel, deletePanel } from "../services/api";
 import { FaHeart, FaRegComment, FaEdit, FaTrash } from 'react-icons/fa';
 import { useAuth0 } from "@auth0/auth0-react";
 
 export default function SinglePanel() {
+  // Estrae l'ID del pannello dai parametri dell'URL
   const { id } = useParams();
+  // Hook per la navigazione programmatica
   const navigate = useNavigate();
+  // Ottiene l'utente corrente da Auth0
   const { user: currentUser } = useAuth0();
 
-  // Stati
-  const [panel, setPanel] = useState(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [comment, setComment] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedDescription, setEditedDescription] = useState('');
-  const [isOwner, setIsOwner] = useState(false);
+  // Stati del componente
+  const [panel, setPanel] = useState(null); // Dati del pannello
+  const [loading, setLoading] = useState(true); // Stato di caricamento
+  const [comment, setComment] = useState(''); // Testo del nuovo commento
+  const [isEditing, setIsEditing] = useState(false); // Modalità di modifica
+  const [editedDescription, setEditedDescription] = useState(''); // Descrizione modificata
+  const [isOwner, setIsOwner] = useState(false); // Flag per il proprietario del pannello
 
-  // Effetto per caricare i dati del pannello e dell'utente
+  const [panelUser, setPanelUser] = useState(null);
+
   useEffect(() => {
-    async function fetchPanelAndUser() {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        if (userData && userData.id) {
-          const panelData = await getPanelById(userData.id, id);
-          setPanel(panelData.data);
-          setEditedDescription(panelData.data.description);
+    if (panel && panel.user) {
+      setPanelUser(panel.user);
+    }
+  }, [panel]);
 
-          if (panelData.data.user && panelData.data.user._id) {
-            const userDetails = await getUserById(panelData.data.user._id);
-            setUser(userDetails.data);
-            setIsOwner(userData.id === panelData.data.user._id);
-          }
-        }
+  useEffect(() => {
+    console.log('Panel updated:', panel);
+  }, [panel]);
+
+  // Effetto per caricare i dati del pannello all'avvio del componente
+  useEffect(() => {
+    async function fetchPanel() {
+      try {
+        setLoading(true);
+        // Recupera i dati del pannello dall'API
+        const response = await getPanelById(id);
+        setPanel(response.data);
+        setEditedDescription(response.data.description);
+
+        // Verifica se l'utente corrente è il proprietario del pannello
+        const userData = JSON.parse(localStorage.getItem("userData"));
+        setIsOwner(userData && userData.id === response.data.user._id);
       } catch (error) {
-        console.error("Error fetching panel or user:", error);
+        console.error("Error fetching panel:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchPanelAndUser();
+    fetchPanel();
   }, [id]);
 
-  // Gestori eventi
-  const handleLike = async () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      if (userData && userData.id) {
-        const response = await likePanel(userData.id, panel._id);
-        if (response && response.panel) {
-          setPanel(response.panel);
+// Modifica la funzione handleLike
+const handleLike = async () => {
+  try {
+    const response = await likePanel(panel._id);
+    if (response && response.data && response.data.panel) {
+      setPanel(prevPanel => ({
+        ...prevPanel,
+        ...response.data.panel,
+        user: {
+          ...prevPanel.user,
+          ...response.data.panel.user
         }
-      }
-    } catch (error) {
-      console.error("Error toggling like:", error);
+      }));
     }
-  };
+  } catch (error) {
+    console.error("Error toggling like:", error);
+  }
+};
 
-  const handleComment = async (e) => {
-    e.preventDefault();
-    try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      if (userData && userData.id && comment.trim()) {
-        await commentPanel(userData.id, panel._id, { text: comment });
-        const updatedPanel = await getPanelById(userData.id, id);
-        setPanel(updatedPanel.data);
+const handleComment = async (e) => {
+  e.preventDefault();
+  try {
+    if (comment.trim()) {
+      const response = await commentPanel(panel._id, { text: comment });
+      if (response && response.data && response.data.panel) {
+        setPanel(prevPanel => ({
+          ...prevPanel,
+          ...response.data.panel,
+          user: {
+            ...prevPanel.user,
+            ...response.data.panel.user
+          }
+        }));
         setComment('');
       }
-    } catch (error) {
-      console.error("Error commenting on panel:", error);
     }
-  };
+  } catch (error) {
+    console.error("Error commenting on panel:", error);
+  }
+};
 
+  // Gestisce la modifica della descrizione del pannello
   const handleEdit = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
       if (userData && userData.id) {
         await updatePanel(userData.id, panel._id, { description: editedDescription });
-        const updatedPanel = await getPanelById(userData.id, id);
+        // Aggiorna il pannello dopo la modifica
+        const updatedPanel = await getPanelById(id);
         setPanel(updatedPanel.data);
-        setIsEditing(false);
+        setIsEditing(false); // Esce dalla modalità di modifica
       }
     } catch (error) {
       console.error("Error updating panel:", error);
     }
   };
 
+  // Gestisce l'eliminazione del pannello
   const handleDelete = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
       if (userData && userData.id) {
         await deletePanel(userData.id, panel._id);
+        // Reindirizza l'utente al suo profilo dopo l'eliminazione
         navigate(`/profile/${userData.id}`);
       }
     } catch (error) {
@@ -101,26 +128,29 @@ export default function SinglePanel() {
     }
   };
 
+  // Rendering condizionale per lo stato di caricamento
   if (loading) return <div className="text-white">Loading...</div>;
-  if (!panel || !user) return <div className="text-white">Panel or user not found</div>;
+  // Rendering condizionale se il pannello non è trovato
+  if (!panel) return <div className="text-white">Panel not found</div>;
 
+  // Rendering principale del componente
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="max-w-2xl mx-auto bg-gray-900 text-white p-4 border-b border-gray-800"
+      className="max-w-2xl mx-auto text-white p-4 border-b border-gray-800"
     >
       {/* Header con informazioni utente */}
       <div className="flex items-start mb-4">
         <img
-          src={user.profileImage || "/placeholder-avatar.jpg"}
-          alt={`${user.name}'s Avatar`}
+          src={panel.user.profileImage || "/placeholder-avatar.jpg"}
+          alt={`${panel.user.name}'s Avatar`}
           className="w-12 h-12 rounded-full mr-4"
         />
         <div>
-          <h2 className="font-bold">{user.name}</h2>
-          <p className="text-gray-400">@{user.nickname}</p>
+          <h2 className="font-bold">{panel.user.name}</h2>
+          <p className="text-gray-400">@{panel.user.nickname}</p>
         </div>
       </div>
 

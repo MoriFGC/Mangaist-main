@@ -415,6 +415,24 @@ router.get('/:userId/favoritePanels/:panelId', async (req, res) => {
   }
 });
 
+// GET un pannello specifico
+router.get('/panels/:panelId', async (req, res) => {
+  try {
+    const users = await User.find({ 'favoritePanels._id': req.params.panelId })
+      .select('favoritePanels.$')
+      .populate('favoritePanels.user', 'name nickname profileImage');
+
+    if (users.length === 0 || users[0].favoritePanels.length === 0) {
+      return res.status(404).json({message: 'Pannello non trovato'});
+    }
+
+    const panel = users[0].favoritePanels[0];
+    res.json(panel);
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+});
+
 
 // DELETE rimuovi un pannello preferito specifico
 router.delete('/:userId/favoritePanels/:panelId', async (req, res) => {
@@ -446,67 +464,62 @@ router.delete('/:userId/favoritePanels/:panelId', async (req, res) => {
   }
 });
 
-// POST aggiungere un like a un pannello
-router.post('/:userId/favoritePanels/:panelId/like', authMiddleware, async (req, res) => {
+// Modifica la route per i like
+router.post('/panels/:panelId/like', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findOne({ 'favoritePanels._id': req.params.panelId });
     if (!user) {
-      return res.status(404).json({message: 'Utente non trovato'});
+      return res.status(404).json({message: 'Pannello non trovato'});
     }
 
-    const panel = user.favoritePanels.id(req.params.panelId);
-    if (!panel) {
-      return res.status(404).json({message: 'Pannello preferito non trovato'});
-    }
+    const panelIndex = user.favoritePanels.findIndex(p => p._id.toString() === req.params.panelId);
+    const currentPanel = user.favoritePanels[panelIndex];
 
-    const likeIndex = panel.likes.indexOf(req.user._id);
-    let message;
-
+    const likeIndex = currentPanel.likes.indexOf(req.user._id);
     if (likeIndex > -1) {
-      // L'utente ha già messo like, quindi lo rimuoviamo
-      panel.likes.splice(likeIndex, 1);
-      message = 'Like rimosso con successo';
+      currentPanel.likes.splice(likeIndex, 1);
     } else {
-      // L'utente non ha ancora messo like, quindi lo aggiungiamo
-      panel.likes.push(req.user._id);
-      message = 'Like aggiunto con successo';
+      currentPanel.likes.push(req.user._id);
     }
 
     await user.save();
 
-    res.json({message, panel});
+    // Popola i dati dell'utente
+    await user.populate('favoritePanels.user', 'name nickname profileImage');
+
+    res.json({ message: 'Like aggiornato con successo', panel: currentPanel });
   } catch (error) {
     console.error('Errore nel toggle del like:', error);
     res.status(500).json({message: error.message});
   }
 });
-// POST aggiungere un commento a un pannello
-router.post('/:userId/favoritePanels/:panelId/comment', authMiddleware, async (req, res) => {
+
+router.post('/panels/:panelId/comment', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findOne({ 'favoritePanels._id': req.params.panelId });
     if (!user) {
-      return res.status(404).json({message: 'Utente non trovato'});
+      return res.status(404).json({message: 'Pannello non trovato'});
     }
 
-    const panel = user.favoritePanels.id(req.params.panelId);
-    if (!panel) {
-      return res.status(404).json({message: 'Pannello preferito non trovato'});
-    }
+    const panelIndex = user.favoritePanels.findIndex(p => p._id.toString() === req.params.panelId);
+    const currentPanel = user.favoritePanels[panelIndex];
 
     const newComment = {
       user: req.user._id,
       text: req.body.text
     };
 
-    panel.comments.push(newComment);
+    currentPanel.comments.push(newComment);
     await user.save();
 
-    res.status(201).json({message: 'Commento aggiunto con successo', comment: newComment});
+    // Popola i dati dell'utente
+    await user.populate('favoritePanels.user', 'name nickname profileImage');
+    await user.populate('favoritePanels.comments.user', 'name nickname profileImage');
+
+    res.status(201).json({message: 'Commento aggiunto con successo', panel: currentPanel});
   } catch (error) {
     console.error('Errore nell\'aggiunta del commento:', error);
     res.status(500).json({message: error.message});
   }
 });
-
-
 export default router;

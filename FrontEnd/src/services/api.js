@@ -133,20 +133,20 @@ export const updateFavoritePanel = (userId, panelId, panelData) => api.patch(`/u
   headers: { 'Content-Type': 'multipart/form-data' }
 });
 export const deleteFavoritePanel = (userId, panelId) => api.delete(`/users/${userId}/favoritePanels/${panelId}`);
-export const getPanelById = (userId, panelId) => api.get(`/users/${userId}/favoritePanels/${panelId}`);
+
+export const getPanelById = async (panelId) => {
+  return api.get(`/users/panels/${panelId}`);
+};
 
 // Nuove funzioni per i pannelli
 // Aggiorniamo queste funzioni per assicurarci che gli URL siano corretti
-export const likePanel = async (userId, panelId) => {
-  try {
-    const response = await api.post(`/users/${userId}/favoritePanels/${panelId}/like`);
-    return response.data;
-  } catch (error) {
-    console.error('Error in likePanel:', error.response ? error.response.data : error.message);
-    throw error;
-  }
+// Modifica la funzione likePanel
+export const likePanel = async (panelId) => {
+  return api.post(`/users/panels/${panelId}/like`);
 };
-export const commentPanel = (userId, panelId, commentData) => api.post(`/users/${userId}/favoritePanels/${panelId}/comment`, commentData);
+
+export const commentPanel = (panelId, commentData) => api.post(`/users/panels/${panelId}/comment`, commentData);
+
 export const updatePanel = (userId, panelId, panelData) => api.patch(`/users/${userId}/favoritePanels/${panelId}`, panelData);
 export const deletePanel = (userId, panelId) => api.delete(`/users/${userId}/favoritePanels/${panelId}`);
 
