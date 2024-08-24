@@ -18,7 +18,7 @@ function App() {
 
   return (
     <Router>
-      <Nav />
+      <Nav>
         <Routes>
           {/* TO DO SISTEMARE FIRSTPAGE */}
           <Route path="/" element={<FirstPage />} /> 
@@ -31,6 +31,7 @@ function App() {
           <Route path="/panel/:id" element={<SinglePanel />} />
           <Route path="/users" element={<AllUsers />} />
         </Routes>
+        </Nav>
     </Router>
   );
 }

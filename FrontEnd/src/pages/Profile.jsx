@@ -106,7 +106,7 @@ const Profile = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="text-white p-4"
+      className="text-white"
     >
       {/* Sezione del profilo */}
       <h1 className="text-2xl font-bold mb-4">Profile</h1>
