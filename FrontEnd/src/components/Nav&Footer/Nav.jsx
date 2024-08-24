@@ -55,11 +55,7 @@ const Sidebar = ({ userData, navItems, socialItems, location }) => (
       <img src={logo} alt="logo" className="w-20 mx-auto" />
     </div>
     <div className="mb-8">
-      {userData ? (
-        <DropdownProfile userData={userData} />
-      ) : (
-        <LoginButton />
-      )}
+      {userData ? <DropdownProfile userData={userData} /> : <LoginButton />}
     </div>
     <nav className="flex-grow">
       {navItems.map((item, index) => (
@@ -69,6 +65,7 @@ const Sidebar = ({ userData, navItems, socialItems, location }) => (
           icon={item.icon}
           name={item.name}
           isActive={location.pathname === item.href}
+          onClick={item.onClick} // Aggiungi questa riga
         />
       ))}
     </nav>
@@ -101,7 +98,7 @@ const MobileNav = ({ userData, navItems, socialItems, location }) => {
         </div>
         {/* Logo */}
         <div className="order-2 absolute left-1/2 transform -translate-x-1/2">
-          <Link to='/home'>
+          <Link to="/home">
             <img src={logo} alt="logo" className="w-20" />
           </Link>
         </div>
@@ -140,7 +137,7 @@ const MobileNav = ({ userData, navItems, socialItems, location }) => {
                 isActive={location.pathname === item.href}
                 onClick={() => {
                   setIsMenuOpen(false);
-                  if (item.onClick) item.onClick();  // Aggiungi questa condizione
+                  if (item.onClick) item.onClick(); // Aggiungi questa condizione
                 }}
               />
             ))}
@@ -193,21 +190,28 @@ export default function Nav({ children }) {
     { name: "Home", href: "/home", icon: IoMdHome },
     { name: "Library", href: "/library", icon: IoLibrary },
     { name: "Social", href: "/users", icon: IoPeople },
-    { name: "Profile",  href: `/profile/${userData?._id}`, icon: BiSolidUser  },
+    { name: "Profile", href: `/profile/${userData?._id}`, icon: BiSolidUser },
     { name: "Logout", onClick: handleLogout, icon: MdLogout },
   ];
   const socialItems = [
-    { name: "Instagram", href: "https://www.instagram.com/abdul.jsx", icon: BiLogoInstagramAlt },
+    {
+      name: "Instagram",
+      href: "https://www.instagram.com/abdul.jsx",
+      icon: BiLogoInstagramAlt,
+    },
     { name: "GitHub", href: "https://github.com/MoriFGC", icon: FaGithub },
-    { name: "LinkedIn", href: "https://www.linkedin.com/in/abd-elrahman-mohamed-44278a30b/", icon: FaLinkedin },
+    {
+      name: "LinkedIn",
+      href: "https://www.linkedin.com/in/abd-elrahman-mohamed-44278a30b/",
+      icon: FaLinkedin,
+    },
   ];
-
 
   return (
     <div className="flex flex-col md:flex-row">
       {/* Sidebar (visibile da 810px in su) */}
       <div className="hidden md:block w-64 fixed h-full">
-        <Sidebar 
+        <Sidebar
           userData={userData || auth0User}
           navItems={navItems}
           socialItems={socialItems}
@@ -219,7 +223,7 @@ export default function Nav({ children }) {
       <div className="flex-1 md:ml-64">
         {/* Navigazione mobile (visibile fino a 809px) */}
         <div className="md:hidden">
-          <MobileNav 
+          <MobileNav
             userData={userData || auth0User}
             navItems={navItems}
             socialItems={socialItems}
@@ -228,9 +232,7 @@ export default function Nav({ children }) {
         </div>
 
         {/* Outlet per il contenuto delle pagine */}
-        <main className="p-4">
-          {children}
-        </main>
+        <main className="p-4">{children}</main>
       </div>
     </div>
   );
