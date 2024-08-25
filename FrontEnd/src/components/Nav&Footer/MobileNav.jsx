@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../../assets/mori3.svg";
-import LoginButton from "../LoginButton";
+import LoginButton from "./LoginButton";
 import NavItem from "./NavItem";
 import AnimatedIcon from "./AnimatedIcon"; // Importiamo AnimatedIcon invece di AnimatedSocialIcon
 

@@ -11,7 +11,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import CreateMangaDialog from "../components/profile/CreateMangaDialog";
 import CreatePanelDialog from "../components/profile/CreatePanelDialog";
 
-const Profile = () => {
+const Profile = ({ updateUserData }) => {
   // Estrae l'ID dall'URL
   const { id } = useParams();
   
@@ -64,6 +64,8 @@ const Profile = () => {
   // Gestore per l'aggiornamento del profilo
   const handleProfileUpdate = async (updatedProfile) => {
     setProfile(updatedProfile);
+    // Aggiorna lo stato nel componente genitore
+    updateUserData(updatedProfile);
     setIsUpdateDialogOpen(false);
     
     // Aggiorna il localStorage con i nuovi dati del profilo

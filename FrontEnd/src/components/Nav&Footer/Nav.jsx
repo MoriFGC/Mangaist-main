@@ -1,4 +1,4 @@
-// Importazione delle dipendenze necessarie
+// src/components/Nav.jsx
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -12,14 +12,12 @@ import { getUserById } from "../../services/api";
 import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 
-// Definizione del componente Nav
 export default function Nav({ children }) {
-  // Utilizzo degli hook di Auth0 e React Router
   const { user: auth0User, isAuthenticated, logout } = useAuth0();
   const [userData, setUserData] = useState(null);
   const location = useLocation();
 
-  // Effetto per recuperare i dati dell'utente
+  // Effetto per recuperare i dati dell'utente all'avvio e quando cambia l'autenticazione
   useEffect(() => {
     const fetchUserData = async () => {
       if (isAuthenticated && auth0User) {
@@ -37,6 +35,11 @@ export default function Nav({ children }) {
 
     fetchUserData();
   }, [isAuthenticated, auth0User]);
+
+  // Funzione per aggiornare i dati dell'utente, inclusa l'immagine del profilo
+  const updateUserData = (newData) => {
+    setUserData(prevData => ({ ...prevData, ...newData }));
+  };
 
   // Funzione per gestire il logout
   const handleLogout = () => {
@@ -56,20 +59,11 @@ export default function Nav({ children }) {
 
   // Definizione dei link ai social media
   const socialItems = [
-    {
-      name: "Instagram",
-      href: "https://www.instagram.com/abdul.jsx",
-      icon: BiLogoInstagramAlt,
-    },
+    { name: "Instagram", href: "https://www.instagram.com/abdul.jsx", icon: BiLogoInstagramAlt },
     { name: "GitHub", href: "https://github.com/MoriFGC", icon: FaGithub },
-    {
-      name: "LinkedIn",
-      href: "https://www.linkedin.com/in/abd-elrahman-mohamed-44278a30b/",
-      icon: FaLinkedin,
-    },
+    { name: "LinkedIn", href: "https://www.linkedin.com/in/abd-elrahman-mohamed-44278a30b/", icon: FaLinkedin },
   ];
 
-  // Rendering del componente
   return (
     <div className="flex flex-col md:flex-row">
       {/* Sidebar (visibile da 810px in su) */}
@@ -95,7 +89,7 @@ export default function Nav({ children }) {
         </div>
 
         {/* Outlet per il contenuto delle pagine */}
-        <main className="p-4">{children}</main>
+        <main className="p-4">{typeof children === 'function' ? children({ updateUserData }) : children}</main>
       </div>
     </div>
   );

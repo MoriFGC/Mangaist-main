@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import logo from "../../assets/mori3.svg";
-import LoginButton from "../LoginButton";
+import LoginButton from "./LoginButton";
 import NavItem from "./NavItem";  // Importiamo NavItem
 import AnimatedSocialIcon from "./AnimatedSocialIcon";
 
