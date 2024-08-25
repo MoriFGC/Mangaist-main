@@ -71,7 +71,6 @@ router.post('/auth0-callback', async (req, res) => {
     const isAdmin = isAdminEmail(userEmail);
     const userId = decodedToken.sub;
 
-    // Usa le informazioni dal token decodificato
     const userInfo = {
       name: decodedToken.name || decodedToken.nickname,
       email: decodedToken.email,
@@ -80,23 +79,23 @@ router.post('/auth0-callback', async (req, res) => {
 
     let user = await User.findOne({ authId: userId });
     if (!user) {
+      // Creazione di un nuovo utente
       user = new User({
         authId: userId,
         email: userInfo.email,
         name: userInfo.name,
         role: isAdmin ? 'admin' : 'user',
         profileCompleted: false,
-        profileImage: userInfo.picture
+        authImage: userInfo.picture,
+        profileImage: null  // Inizialmente null, verrà impostata quando l'utente caricherà un'immagine
       });
     } else {
-      // Aggiorna il ruolo se l'email è nella lista admin e l'utente non è già admin
+      // Aggiornamento utente esistente
       if (userEmail && isAdminEmail(userEmail) && user.role !== 'admin') {
         user.role = 'admin';
       }
-      // Aggiorna l'immagine del profilo se è cambiata
-      if (user.profileImage !== userInfo.picture) {
-        user.profileImage = userInfo.picture;
-      }
+      user.authImage = userInfo.picture;  // Aggiorniamo sempre l'immagine di Auth0
+      // Non tocchiamo profileImage qui
     }
     await user.save();
 
@@ -109,7 +108,7 @@ router.post('/auth0-callback', async (req, res) => {
         email: user.email, 
         role: user.role,
         profileCompleted: user.profileCompleted,
-        profileImage: user.profileImage
+        profileImage: user.profileImage || user.authImage  // Usiamo profileImage se esiste, altrimenti authImage
       } 
     });
   } catch (error) {
@@ -117,6 +116,5 @@ router.post('/auth0-callback', async (req, res) => {
     res.status(500).json({ message: "Errore durante l'autenticazione", error: error.message });
   }
 });
-
 
 export default router;

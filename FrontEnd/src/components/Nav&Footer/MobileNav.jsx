@@ -14,6 +14,7 @@ const MobileNav = ({ userData, navItems, socialItems, location }) => {
   // Funzione per aprire/chiudere il menu
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+  console.log(userData);
   return (
     <header className="relative w-full">
       <nav className="relative h-20 mx-auto max-w-7xl flex justify-between items-center px-4">
