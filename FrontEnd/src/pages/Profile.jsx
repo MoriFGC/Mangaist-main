@@ -10,6 +10,7 @@ import UpdateProfileDialog from "../components/profile/UpdateProfileDialog";
 import { useAuth0 } from "@auth0/auth0-react";
 import CreateMangaDialog from "../components/profile/CreateMangaDialog";
 import CreatePanelDialog from "../components/profile/CreatePanelDialog";
+import { FaCheckCircle, FaBookOpen, FaBook } from "react-icons/fa";
 
 const Profile = ({ updateUserData }) => {
   // Estrae l'ID dall'URL
@@ -89,6 +90,20 @@ const Profile = ({ updateUserData }) => {
     await fetchProfileAndManga();
   };
 
+  // Aggiungi questa funzione prima del rendering del componente
+const renderReadingStatusIcon = (manga) => {
+  switch (manga.readingStatus) {
+    case 'completed':
+      return <FaCheckCircle className="text-green-500" title="Completed" />;
+    case 'reading':
+      return <FaBookOpen className="text-blue-500" title="Reading" />;
+    case 'to-read':
+      return <FaBook className="text-gray-500" title="To Read" />;
+    default:
+      return null;
+  }
+}
+
   // Mostra un indicatore di caricamento mentre i dati vengono recuperati
   if (isLoading || authLoading) {
     return <div className="text-white">Loading...</div>;
@@ -102,6 +117,7 @@ const Profile = ({ updateUserData }) => {
   // Verifica se l'utente autenticato è il proprietario del profilo
   const isProfileOwner = isAuthenticated && authUser && authUser.sub === profile.authId;
 
+  console.log(userManga);
   // Rendering del componente
   return (
     <motion.div
@@ -160,23 +176,26 @@ const Profile = ({ updateUserData }) => {
           </Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {userManga.map((manga, index) => (
-            <motion.div
-              key={index}
-              whileHover={{ scale: 1.05 }}
-              className="flex flex-col items-center"
-            >
-              <Link to={`/manga/${manga._id}`}>
-                <img
-                  src={manga.coverImage}
-                  alt={manga.title}
-                  className="w-full h-56 object-cover rounded-lg mb-2"
-                />
-                <p className="text-sm font-semibold text-center">{manga.title}</p>
-              </Link>
-            </motion.div>
-          ))}
+  {userManga.map((manga, index) => (
+    <motion.div
+      key={index}
+      whileHover={{ scale: 1.05 }}
+      className="flex flex-col items-center relative"
+    >
+      <Link to={`/manga/${manga._id}`}>
+        <div className="absolute top-2 right-2 z-10">
+          {renderReadingStatusIcon(manga)}
         </div>
+        <img
+          src={manga.coverImage}
+          alt={manga.title}
+          className="w-full h-56 object-cover rounded-lg mb-2"
+        />
+        <p className="text-sm font-semibold text-center">{manga.title}</p>
+      </Link>
+    </motion.div>
+  ))}
+</div>
       </div>
 
       {/* Sezione dei pannelli preferiti */}

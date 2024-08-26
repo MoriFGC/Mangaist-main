@@ -17,14 +17,15 @@ export default function SingleManga() {
   // Estrae l'ID del manga dall'URL
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   // Stati per gestire i dati del manga e il progresso dell'utente
   const [manga, setManga] = useState(null);
   const [userProgress, setUserProgress] = useState({
     currentChapter: 0,
     currentVolume: 0,
+    readingStatus: "to-read",
   });
-  
+
   // Altri stati per gestire vari aspetti del componente
   const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +41,7 @@ export default function SingleManga() {
         const userData = JSON.parse(localStorage.getItem("userData"));
         if (userData && userData.id) {
           setUserId(userData.id);
-          
+
           // PROBLEMA: Questa comparazione non è corretta
           // setIsCurrentUser(userData.id === id);
           // Il 'id' qui è l'ID del manga, non l'ID dell'utente
@@ -64,6 +65,8 @@ export default function SingleManga() {
                 setUserProgress({
                   currentChapter: progressResponse.data.currentChapter || 0,
                   currentVolume: progressResponse.data.currentVolume || 0,
+                  readingStatus:
+                  progressResponse.data.readingStatus || "to-read",
                 });
               }
             } catch (progressError) {
@@ -88,9 +91,30 @@ export default function SingleManga() {
   // Gestore per l'aggiornamento del progresso di lettura
   const handleProgressChange = async (type, value) => {
     const newProgress = { ...userProgress, [type]: value };
-    setUserProgress(newProgress);
+
+    // Determina il nuovo stato di lettura
+    let newReadingStatus;
+    if (
+      value === 0 &&
+      (type === "currentChapter"
+        ? userProgress.currentVolume
+        : newProgress.currentVolume) === 0
+    ) {
+      newReadingStatus = "to-read";
+    } else if (
+      value >= manga.chapters ||
+      (type === "currentVolume" && value >= manga.volumes)
+    ) {
+      newReadingStatus = "completed";
+    } else {
+      newReadingStatus = "reading";
+    }
+
+    const updatedProgress = { ...newProgress, readingStatus: newReadingStatus };
+
+    setUserProgress(updatedProgress);
     try {
-      await updateUserMangaProgress(userId, manga._id, newProgress);
+      await updateUserMangaProgress(userId, manga._id, updatedProgress);
     } catch (error) {
       console.error("Error updating progress:", error);
     }

@@ -82,12 +82,13 @@ export const getUserMangaProgress = async (userId, mangaId) => {
   }
 };
 
+// Nel file del frontend dove si gestisce l'aggiornamento del progresso
 export const updateUserMangaProgress = async (userId, mangaId, progressData) => {
   try {
     const response = await api.patch(`/users/${userId}/manga/${mangaId}/progress`, progressData);
     return response.data;
   } catch (error) {
-    console.error('Error updating manga progress:', error);
+    console.error('Errore nell\'aggiornamento del progresso:', error);
     throw error;
   }
 };

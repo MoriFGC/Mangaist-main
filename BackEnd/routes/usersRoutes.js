@@ -197,25 +197,27 @@ router.get('/:userId/manga/:mangaId', async (req, res) => {
 });
 
 // GET manga di uno specifico utente
+
 router.get('/:id/manga', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).populate('manga.manga');
     if (!user) {
       return res.status(404).json({message: 'Utente non trovato'});
     }
-    // Restituisci solo i dati necessari per la visualizzazione pubblica
-    const publicMangaData = user.manga.map(item => ({
+    const userMangaData = user.manga.map(item => ({
       _id: item.manga._id,
       title: item.manga.title,
       coverImage: item.manga.coverImage,
-      author: item.manga.author
+      author: item.manga.author,
+      currentChapter: item.currentChapter,
+      currentVolume: item.currentVolume,
+      readingStatus: item.readingStatus  // Assicurati che questo campo venga restituito
     }));
-    res.json(publicMangaData);
+    res.json(userMangaData);
   } catch (error) {
     res.status(500).json({message: error.message});
   }
 });
-
 // POST aggiungi manga al catalogo dell'utente
 
 router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, res) => {
@@ -299,6 +301,8 @@ router.delete('/:userId/manga/:mangaId', authMiddleware, isAuthorizedForManga, a
 
 //PATCH
 
+// In usersRoutes.js
+
 router.patch('/:userId/manga/:mangaId/progress', async (req, res) => {
   try {
     const { userId, mangaId } = req.params;
@@ -314,16 +318,37 @@ router.patch('/:userId/manga/:mangaId/progress', async (req, res) => {
       return res.status(404).json({ message: 'Manga non trovato nel catalogo dell\'utente' });
     }
 
+    // Recuperiamo le informazioni complete del manga
+    const manga = await Manga.findById(mangaId);
+    if (!manga) {
+      return res.status(404).json({ message: 'Manga non trovato' });
+    }
+
+    // Aggiorniamo il progresso
     user.manga[mangaIndex].currentChapter = currentChapter;
     user.manga[mangaIndex].currentVolume = currentVolume;
+
+    // Determiniamo lo stato di lettura in base al progresso
+    if (currentChapter === 0 && currentVolume === 0) {
+      // Se l'utente è al capitolo 0 e volume 0, lo stato è 'to-read'
+      user.manga[mangaIndex].readingStatus = 'to-read';
+    } else if (currentChapter >= manga.chapters || currentVolume >= manga.volumes) {
+      // Se l'utente ha raggiunto o superato l'ultimo capitolo o volume, lo stato è 'completed'
+      user.manga[mangaIndex].readingStatus = 'completed';
+    } else {
+      // In tutti gli altri casi, lo stato è 'reading'
+      user.manga[mangaIndex].readingStatus = 'reading';
+    }
 
     await user.save();
 
     res.json(user.manga[mangaIndex]);
   } catch (error) {
+    console.error('Errore nell\'aggiornamento del progresso:', error);
     res.status(500).json({ message: error.message });
   }
 });
+
 //-------------------------- USER PANEL ---------------------------
 
 // POST aggiungi un pannello preferito
