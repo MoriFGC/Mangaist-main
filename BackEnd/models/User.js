@@ -27,6 +27,8 @@ const userSchema = new mongoose.Schema({
   email: { type: String },
   profileImage: {type: String},
   profilePublic: { type: Boolean, default: false },
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   authId: {
     type: String,
     required: true,
@@ -36,6 +38,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
+  },
+  description: { 
+    type: String, 
+    default: '' // Valore predefinito: stringa vuota
   },
   profileCompleted: { type: Boolean, default: false },
 manga: [{

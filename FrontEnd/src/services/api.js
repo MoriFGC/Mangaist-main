@@ -156,4 +156,18 @@ export const sendMessage = (messageData) => api.post('/messages', messageData);
 export const getConversations = () => api.get('/messages/conversations');
 export const getConversationMessages = (userId) => api.get(`/messages/${userId}`);
 
+//follow fetch
+// Funzione per seguire un utente
+export const followUser = (userId) => {
+  // Facciamo una richiesta POST all'endpoint corretto
+  // Nota: usiamo `api.post` invece di `axios.post` per usare l'istanza configurata
+  return api.post(`/users/${userId}/follow`);
+};
+
+// Funzione per smettere di seguire un utente
+export const unfollowUser = (userId) => {
+  // Facciamo una richiesta POST all'endpoint corretto
+  return api.post(`/users/${userId}/unfollow`);
+};
+
 export default api;

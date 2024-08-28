@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog } from '@headlessui/react';
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { motion } from 'framer-motion';
 import { addFavoritePanel } from '../../services/api';
 
@@ -72,13 +72,13 @@ const CreatePanelDialog = ({ isOpen, closeModal, onPanelCreation, userManga }) =
       }
     }
   };
-
+console.log(userManga);
   return (
     <Dialog open={isOpen} onClose={closeModal} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="mx-auto max-w-md rounded bg-white p-6 overflow-y-auto max-h-[90vh]">
-          <Dialog.Title className="text-lg font-medium leading-6 text-gray-900 mb-4">Add New Panel</Dialog.Title>
+        <DialogPanel className="mx-auto max-w-md rounded bg-white p-6 overflow-y-auto max-h-[90vh]">
+          <DialogTitle className="text-lg font-medium leading-6 text-gray-900 mb-4">Add New Panel</DialogTitle>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
@@ -99,7 +99,7 @@ const CreatePanelDialog = ({ isOpen, closeModal, onPanelCreation, userManga }) =
                 required
                 value={panelData.manga}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               >
                 <option value="">Select a manga</option>
                 {userManga.map((manga) => (
@@ -163,7 +163,7 @@ const CreatePanelDialog = ({ isOpen, closeModal, onPanelCreation, userManga }) =
               </button>
             </div>
           </form>
-        </Dialog.Panel>
+        </DialogPanel>
       </div>
     </Dialog>
   );

@@ -8,26 +8,37 @@ import { getUserById, getUserManga } from "../services/api";
 import { Link } from "react-router-dom";
 import UpdateProfileDialog from "../components/profile/UpdateProfileDialog";
 import { useAuth0 } from "@auth0/auth0-react";
-import CreateMangaDialog from "../components/profile/CreateMangaDialog";
-import CreatePanelDialog from "../components/profile/CreatePanelDialog";
 import { FaCheckCircle, FaBookOpen, FaBook } from "react-icons/fa";
+import { followUser, unfollowUser } from "../services/api";
+import ResponsiveProfile from "../components/profile/ResponsiveProfile";
+import { BsGrid3X3, BsBookmarks } from "react-icons/bs";
 
 const Profile = ({ updateUserData }) => {
   // Estrae l'ID dall'URL
   const { id } = useParams();
-  
+
   // Stati per gestire i dati del profilo e dei manga dell'utente
   const [profile, setProfile] = useState(null);
   const [userManga, setUserManga] = useState([]);
-  
+
   // Stati per gestire l'apertura dei vari dialog
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isCreateMangaDialogOpen, setIsCreateMangaDialogOpen] = useState(false);
   const [isCreatePanelDialogOpen, setIsCreatePanelDialogOpen] = useState(false);
-  
+
+  //stato per gestire i follow
+  const [isFollowing, setIsFollowing] = useState(false);
+
+    // Nuovo stato per tracciare la sezione attiva
+    const [activeSection, setActiveSection] = useState('manga');
+
   // Utilizzo di Auth0 per l'autenticazione
-  const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth0();
-  
+  const {
+    user: authUser,
+    isAuthenticated,
+    isLoading: authLoading,
+  } = useAuth0();
+
   // Stato per gestire il caricamento dei dati
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,12 +52,12 @@ const Profile = ({ updateUserData }) => {
       // Recupera i dati dell'utente dal localStorage come fallback
       const storedUserData = JSON.parse(localStorage.getItem("userData"));
       // Usa l'ID dall'URL, o l'ID memorizzato, o 'me' come fallback
-      const userId = id || storedUserData?.id || 'me';
-      
+      const userId = id || storedUserData?.id || "me";
+
       // Recupera i dati del profilo
       const profileData = await getUserById(userId);
       setProfile(profileData.data);
-      
+
       // Recupera i manga dell'utente
       const mangaData = await getUserManga(profileData.data._id);
       setUserManga(mangaData.data.filter((item) => item.manga !== null));
@@ -62,20 +73,27 @@ const Profile = ({ updateUserData }) => {
     fetchProfileAndManga();
   }, [fetchProfileAndManga]);
 
+  // Use effect per il follow
+  useEffect(() => {
+    if (profile && authUser && profile.followers) {
+      setIsFollowing(profile.followers.includes(authUser.sub));
+    }
+  }, [profile, authUser]);
+
   // Gestore per l'aggiornamento del profilo
   const handleProfileUpdate = async (updatedProfile) => {
     setProfile(updatedProfile);
     // Aggiorna lo stato nel componente genitore
     updateUserData(updatedProfile);
     setIsUpdateDialogOpen(false);
-    
+
     // Aggiorna il localStorage con i nuovi dati del profilo
     const storedUserData = JSON.parse(localStorage.getItem("userData"));
     if (storedUserData) {
       storedUserData.profileImage = updatedProfile.profileImage;
       localStorage.setItem("userData", JSON.stringify(storedUserData));
     }
-  
+
     await fetchProfileAndManga();
   };
 
@@ -84,27 +102,143 @@ const Profile = ({ updateUserData }) => {
     setIsCreateMangaDialogOpen(false);
     await fetchProfileAndManga();
   };
-  
+
   const handlePanelCreation = async (newPanel) => {
     setIsCreatePanelDialogOpen(false);
     await fetchProfileAndManga();
   };
 
+  // funzione per il follow
+  // Funzione per gestire il follow/unfollow
+  const handleFollowToggle = async () => {
+    try {
+      // Determiniamo quale funzione usare in base allo stato corrente
+      const toggleFollow = isFollowing ? unfollowUser : followUser;
+
+      // Chiamiamo la funzione appropriata
+      await toggleFollow(profile._id);
+
+      // Aggiorniamo lo stato locale
+      setIsFollowing(!isFollowing);
+
+      // Aggiorniamo il conteggio dei follower nel profilo
+      setProfile((prevProfile) => ({
+        ...prevProfile,
+        followers: isFollowing
+          ? prevProfile.followers.filter((id) => id !== authUser.sub)
+          : [...prevProfile.followers, authUser.sub],
+      }));
+    } catch (error) {
+      // Logghiamo l'errore per il debugging
+      console.error("Errore nel seguire/smettere di seguire:", error);
+      // Qui potresti anche mostrare un messaggio di errore all'utente
+    }
+  };
+
   // Aggiungi questa funzione prima del rendering del componente
-const renderReadingStatusIcon = (manga) => {
-  switch (manga.readingStatus) {
-    case 'completed':
-      return <FaCheckCircle className="text-green-500" title="Completed" />;
-    case 'reading':
-      return <FaBookOpen className="text-blue-500" title="Reading" />;
-    case 'to-read':
-      return <FaBook className="text-gray-500" title="To Read" />;
-    default:
-      return null;
-  }
-}
+  // Modifichiamo la funzione renderReadingStatusIcon per creare dei badge più visibili
+  const renderReadingStatusIcon = (manga) => {
+    let bgColor, textColor, icon, text;
+    switch (manga.readingStatus) {
+      case "completed":
+        bgColor = "bg-green-500";
+        textColor = "text-white";
+        icon = <FaCheckCircle className="mr-1" />;
+        text = "Completed";
+        break;
+      case "reading":
+        bgColor = "bg-blue-500";
+        textColor = "text-white";
+        icon = <FaBookOpen className="mr-1" />;
+        text = "Reading";
+        break;
+      case "to-read":
+        bgColor = "bg-gray-500";
+        textColor = "text-white";
+        icon = <FaBook className="mr-1" />;
+        text = "To Read";
+        break;
+      default:
+        return null;
+    }
+
+    return (
+      <div className={`absolute top-2 right-2 z-10 flex items-center ${bgColor} ${textColor} text-xs font-bold px-2 py-1 rounded-full`}>
+        {icon}
+        {text}
+      </div>
+    );
+  };
+
+  // Animazione per il fade-in degli elementi
+  const fadeIn = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5 } },
+  };
+
+    // Funzione per renderizzare il contenuto della sezione attiva
+    const renderSectionContent = () => {
+      if (activeSection === 'manga') {
+        return (
+          <div className="grid grid-cols-3 gap-2">
+            {userManga.map((manga, index) => (
+              <Link to={`/manga/${manga._id}`} key={index}>
+                <motion.div
+                  className="relative overflow-hidden rounded-lg shadow-lg"
+                  style={{ aspectRatio: "2/3" }}
+
+                >
+                  <motion.img
+                    src={manga.coverImage}
+                    alt={manga.title}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full h-full object-cover"
+                  />
+                  {renderReadingStatusIcon(manga)}
+                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent">
+                    <p className="text-xs font-semibold text-white truncate">
+                      {manga.title}
+                    </p>
+                  </div>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
+        );
+      } else {
+        return (
+          <div className="grid grid-cols-3 gap-2">
+            {profile.favoritePanels && profile.favoritePanels.map((panel, index) => (
+              <Link to={`/panel/${panel._id}`} key={index}>
+                <motion.div
+                  className="relative overflow-hidden shadow-lg"
+                  style={{ aspectRatio: "1/1" }} // Formato più verticale per i pannelli
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <img
+                    src={panel.panelImage}
+                    alt={`Panel from ${panel.manga?.title}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent">
+                    <p className="text-xs font-semibold text-white truncate">
+                      {panel.manga?.title} - Ch.{panel.chapterNumber}
+                    </p>
+                  </div>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
+        );
+      }
+    };
+
+    console.log(userManga);
 
   // Mostra un indicatore di caricamento mentre i dati vengono recuperati
+  // Modifichiamo il rendering per gestire meglio i casi di dati mancanti
   if (isLoading || authLoading) {
     return <div className="text-white">Loading...</div>;
   }
@@ -115,143 +249,56 @@ const renderReadingStatusIcon = (manga) => {
   }
 
   // Verifica se l'utente autenticato è il proprietario del profilo
-  const isProfileOwner = isAuthenticated && authUser && authUser.sub === profile.authId;
+  const isProfileOwner =
+    isAuthenticated && authUser && authUser.sub === profile.authId;
 
   console.log(userManga);
   // Rendering del componente
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="text-white"
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="text-white pb-20 md:pb-0 max-w-4xl mx-auto px-4"
     >
-      {/* Sezione del profilo */}
-      <h1 className="text-2xl font-bold mb-4">Profile</h1>
-      <div className="mb-8">
-        <img
-          src={profile.profileImage || profile.picture}
-          alt="Profile"
-          className="w-20 h-20 rounded-full mb-2"
-        />
-        <p className="text-lg">
-          {profile.name} {profile.cognome}
-        </p>
-        <p className="text-gray-400">{profile.nickname}</p>
-        <p className="text-gray-400">{profile.email}</p>
-        {isProfileOwner && (
-          <button
-            onClick={() => setIsUpdateDialogOpen(true)}
-            className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Update Profile
-          </button>
-        )}
+      {/* Sezione principale del profilo */}
+      <ResponsiveProfile profile={profile}
+      userManga={userManga}
+      setIsUpdateDialogOpen={setIsUpdateDialogOpen}
+      handleFollowToggle={handleFollowToggle}
+      isFollowing={isFollowing}
+      isProfileOwner={isProfileOwner} />
+
+
+      {/* Sezione per le tab dei manga e dei pannelli */}
+      <div className="flex justify-around border-t border-gray-700 mt-16 mb-2">
+        <button
+          className={`flex-1 py-4 flex justify-center items-center ${activeSection === 'manga' ? 'border-t-2 border-white' : ''}`}
+          onClick={() => setActiveSection('manga')}
+        >
+          <BsGrid3X3 className="mr-2" /> Manga
+        </button>
+        <button
+          className={`flex-1 py-4 flex justify-center items-center ${activeSection === 'panels' ? 'border-t-2 border-white' : ''}`}
+          onClick={() => setActiveSection('panels')}
+        >
+          <BsBookmarks className="mr-2" /> Panels
+        </button>
       </div>
 
-      {/* Pulsanti per aggiungere manga e pannelli (solo per il proprietario del profilo) */}
+      {/* Contenuto della sezione attiva */}
+      {renderSectionContent()}
+
+      {/* Dialog per l'aggiornamento del profilo */}
       {isProfileOwner && (
-        <div className="mt-4 space-x-2">
-          <button
-            onClick={() => setIsCreateMangaDialogOpen(true)}
-            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Add Manga
-          </button>
-          <button
-            onClick={() => setIsCreatePanelDialogOpen(true)}
-            className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Add Panel
-          </button>
-        </div>
-      )}
-
-      {/* Sezione dei manga dell'utente */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">My Manga</h2>
-          <Link to={`/all-manga/${profile._id}`} className="text-blue-500 hover:underline">
-            View All Manga
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-  {userManga.map((manga, index) => (
-    <motion.div
-      key={index}
-      whileHover={{ scale: 1.05 }}
-      className="flex flex-col items-center relative"
-    >
-      <Link to={`/manga/${manga._id}`}>
-        <div className="absolute top-2 right-2 z-10">
-          {renderReadingStatusIcon(manga)}
-        </div>
-        <img
-          src={manga.coverImage}
-          alt={manga.title}
-          className="w-full h-56 object-cover rounded-lg mb-2"
-        />
-        <p className="text-sm font-semibold text-center">{manga.title}</p>
-      </Link>
-    </motion.div>
-  ))}
-</div>
-      </div>
-
-      {/* Sezione dei pannelli preferiti */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Favorite Panels</h2>
-          <Link to="/all-panels" className="text-blue-500 hover:underline">
-            View All Panels
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {profile.favoritePanels &&
-            profile.favoritePanels.map((panel, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.05 }}
-                className="flex flex-col items-center"
-              >
-                <Link to={`/panel/${panel._id}`}>
-                  <img
-                    src={panel.panelImage}
-                    alt={`Panel from ${panel.manga?.title}`}
-                    className="w-full h-56 object-cover rounded-lg mb-2"
-                  />
-                  <p className="text-sm font-semibold text-center">
-                    {panel.manga?.title} - Ch.{panel.chapterNumber}
-                  </p>
-                </Link>
-              </motion.div>
-            ))}
-        </div>
-      </div>
-
-      {/* Dialog per l'aggiornamento del profilo e la creazione di manga e pannelli */}
-      {isProfileOwner && (
-        <>
         <UpdateProfileDialog
           isOpen={isUpdateDialogOpen}
           closeModal={() => setIsUpdateDialogOpen(false)}
           user={profile}
           onProfileUpdate={handleProfileUpdate}
         />
-        <CreateMangaDialog
-        isOpen={isCreateMangaDialogOpen}
-        closeModal={() => setIsCreateMangaDialogOpen(false)}
-        onMangaCreation={handleMangaCreation}
-      />
-      <CreatePanelDialog
-        isOpen={isCreatePanelDialogOpen}
-        closeModal={() => setIsCreatePanelDialogOpen(false)}
-        onPanelCreation={handlePanelCreation}
-        userManga={userManga}
-      />
-      </>
       )}
-
     </motion.div>
   );
 };

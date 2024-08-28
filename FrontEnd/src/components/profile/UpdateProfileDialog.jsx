@@ -1,47 +1,64 @@
-import React, { useState } from 'react';
-import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
-import { Fragment } from 'react';
-import { updateUserProfile, updateUserProfileImage } from '../../services/api';
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
+import { Fragment } from "react";
+import { updateUserProfile, updateUserProfileImage } from "../../services/api";
 
 const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
+  // Stato del form
   const [formData, setFormData] = useState({
-    name: user.name || '',
-    cognome: user.cognome || '',
-    nickname: user.nickname || '',
+    name: user.name || "",
+    cognome: user.cognome || "",
+    nickname: user.nickname || "",
     profilePublic: user.profilePublic,
     profileImage: user.profileImage,
+    description: user.description || "", // Aggiungiamo la description
   });
   const [newProfileImage, setNewProfileImage] = useState(null);
 
+  // Gestore per i cambiamenti nei campi del form
   const handleChange = (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    const value =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
   };
 
+  // Gestore per il cambiamento dell'immagine del profilo
   const handleImageChange = (e) => {
     if (e.target.files[0]) {
       setNewProfileImage(e.target.files[0]);
     }
   };
 
+  // Gestore per l'invio del form
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       let updatedUser = await updateUserProfile(user._id, formData);
-      
+
       if (newProfileImage) {
         const imageFormData = new FormData();
-        imageFormData.append('profileImage', newProfileImage);
-        const imageResponse = await updateUserProfileImage(user._id, imageFormData);
-        updatedUser = { ...updatedUser, profileImage: imageResponse.data.profileImage };
+        imageFormData.append("profileImage", newProfileImage);
+        const imageResponse = await updateUserProfileImage(
+          user._id,
+          imageFormData
+        );
+        updatedUser = {
+          ...updatedUser,
+          profileImage: imageResponse.data.profileImage,
+        };
       }
 
       onProfileUpdate(updatedUser);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
     }
   };
-
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -78,7 +95,12 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                 </DialogTitle>
                 <form onSubmit={handleSubmit} className="mt-4">
                   <div className="mb-4">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Name
+                    </label>
                     <input
                       type="text"
                       name="name"
@@ -89,7 +111,12 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                     />
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="cognome" className="block text-sm font-medium text-gray-700">Surname</label>
+                    <label
+                      htmlFor="cognome"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Surname
+                    </label>
                     <input
                       type="text"
                       name="cognome"
@@ -100,7 +127,12 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                     />
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">Nickname</label>
+                    <label
+                      htmlFor="nickname"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Nickname
+                    </label>
                     <input
                       type="text"
                       name="nickname"
@@ -111,7 +143,29 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                     />
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="profileImage" className="block text-sm font-medium text-gray-700">Profile Image</label>
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      id="description"
+                      rows="3"
+                      value={formData.description}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      placeholder="Write a brief description about yourself..."
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      htmlFor="profileImage"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Profile Image
+                    </label>
                     <input
                       type="file"
                       name="profileImage"
@@ -134,7 +188,10 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                       onChange={handleChange}
                       className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="profilePublic" className="ml-2 block text-sm text-gray-900">
+                    <label
+                      htmlFor="profilePublic"
+                      className="ml-2 block text-sm text-gray-900"
+                    >
                       Make profile public
                     </label>
                   </div>

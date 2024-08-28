@@ -11,6 +11,7 @@ import { MdLogout } from "react-icons/md";
 import { getUserById } from "../../services/api";
 import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
+import BottomNav from "./BottomNav";
 
 export default function Nav({ children }) {
   const { user: auth0User, isAuthenticated, logout } = useAuth0();
@@ -89,7 +90,10 @@ export default function Nav({ children }) {
         </div>
 
         {/* Outlet per il contenuto delle pagine */}
-        <main className="p-4">{typeof children === 'function' ? children({ updateUserData }) : children}</main>
+        <main className="p-4 pb-24 md:pb-4">{typeof children === 'function' ? children({ updateUserData }) : children}</main>
+
+        {/* Aggiungiamo BottomNav qui */}
+        <BottomNav userData={userData || auth0User} userManga={userData?.manga || []} />
       </div>
     </div>
   );
