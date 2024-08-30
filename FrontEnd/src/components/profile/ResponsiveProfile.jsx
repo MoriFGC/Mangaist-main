@@ -1,13 +1,50 @@
 import { motion } from "framer-motion";
 
-export default function DekstopProfile({
+export default function ResponsiveProfile({
   profile,
   userManga,
   setIsUpdateDialogOpen,
   handleFollowToggle,
   isFollowing,
   isProfileOwner,
+  isAuthenticated,
 }) {
+  // Funzione per determinare il testo e lo stile del pulsante
+  const getFollowButtonProps = () => {
+    if (isFollowing) {
+      return {
+        text: "Unfollow",
+        className:
+          "px-4 py-1 bg-gray-500 rounded-md text-sm font-semibold text-white hover:bg-gray-600 transition-colors duration-300 w-full",
+      };
+    } else {
+      return {
+        text: "Follow",
+        className:
+          "px-4 py-1 bg-blue-500 rounded-md text-sm font-semibold text-white hover:bg-blue-600 transition-colors duration-300 w-full",
+      };
+    }
+  };
+
+  const followButtonProps = getFollowButtonProps();
+
+  // Renderizza il pulsante solo se l'utente è autenticato e non è il proprietario del profilo
+  const renderFollowButton = () => {
+    if (isAuthenticated && !isProfileOwner) {
+      return (
+        <motion.button
+          onClick={handleFollowToggle}
+          className={followButtonProps.className}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {followButtonProps.text}
+        </motion.button>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       {/* Layout per dekstop */}
@@ -63,21 +100,13 @@ export default function DekstopProfile({
                 Edit Profile
               </motion.button>
             ) : (
-              <motion.button
-                onClick={handleFollowToggle}
-                className="px-4 py-1 bg-blue-500 rounded-md text-sm font-semibold text-white hover:bg-blue-600 transition-colors duration-300"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {isFollowing ? "Unfollow" : "Follow"}
-              </motion.button>
+              renderFollowButton()
             )}
           </div>
         </div>
       </div>
 
       {/* layout per mobile */}
-      {/* Layout per mobile */}
       <div className="md:hidden mb-8">
         <div className="flex items-center mb-4">
           {/* Immagine del profilo */}
@@ -126,22 +155,18 @@ export default function DekstopProfile({
         )}
 
         {/* Pulsante Edit Profile/Follow */}
-        <motion.button
-          onClick={
-            isProfileOwner
-              ? () => setIsUpdateDialogOpen(true)
-              : handleFollowToggle
-          }
-          className="w-full py-2 bg-gray-800 rounded-md text-sm font-semibold text-white hover:bg-gray-700 transition-colors duration-300"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {isProfileOwner
-            ? "Edit Profile"
-            : isFollowing
-            ? "Unfollow"
-            : "Follow"}
-        </motion.button>
+        {isProfileOwner ? (
+          <motion.button
+            onClick={() => setIsUpdateDialogOpen(true)}
+            className="w-full py-2 bg-gray-800 rounded-md text-sm font-semibold text-white hover:bg-gray-700 transition-colors duration-300"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Edit Profile
+          </motion.button>
+        ) : (
+          renderFollowButton()
+        )}
       </div>
     </>
   );

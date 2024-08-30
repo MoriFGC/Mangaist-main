@@ -220,6 +220,8 @@ router.get('/:id/manga', async (req, res) => {
 });
 // POST aggiungi manga al catalogo dell'utente
 
+// usersRoutes.js
+
 router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -230,30 +232,50 @@ router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, r
     console.log('Received manga data:', req.body);
     console.log('Received file:', req.file);
 
-    let mangaData = req.body;
-    if (req.file) {
-      mangaData.coverImage = req.file.path;
+    let manga;
+
+    // Caso 1: Aggiunta di un manga predefinito alla collezione
+    if (req.body.mangaId) {
+      manga = await Manga.findById(req.body.mangaId);
+      if (!manga) {
+        return res.status(404).json({message: 'Manga predefinito non trovato'});
+      }
+
+      // Verifica se l'utente ha già questo manga nel suo catalogo
+      const mangaExists = user.manga.some(m => m.manga.toString() === manga._id.toString());
+      if (mangaExists) {
+        return res.status(400).json({message: 'Manga già presente nel catalogo dell\'utente'});
+      }
+    } 
+    // Caso 2: Creazione di un nuovo manga personale
+    else {
+      let mangaData = req.body;
+      if (req.file) {
+        mangaData.coverImage = req.file.path;
+      }
+
+      // Converti i campi necessari
+      if (mangaData.volumes) mangaData.volumes = Number(mangaData.volumes);
+      if (mangaData.chapters) mangaData.chapters = Number(mangaData.chapters);
+      if (mangaData.publicationYear) mangaData.publicationYear = Number(mangaData.publicationYear);
+
+      // Gestisci il campo genre
+      if (mangaData['genre[]']) {
+        mangaData.genre = Array.isArray(mangaData['genre[]']) ? mangaData['genre[]'] : [mangaData['genre[]']];
+        delete mangaData['genre[]'];
+      }
+
+      // Aggiungi l'ID dell'utente che sta creando il manga
+      mangaData.createdBy = user._id;
+      mangaData.isDefault = false;  // Assicurati che il manga personale non sia impostato come predefinito
+
+      console.log('Processed manga data:', mangaData);
+
+      manga = new Manga(mangaData);
+      await manga.save();
     }
 
-    // Converti i campi necessari
-    if (mangaData.volumes) mangaData.volumes = Number(mangaData.volumes);
-    if (mangaData.chapters) mangaData.chapters = Number(mangaData.chapters);
-    if (mangaData.publicationYear) mangaData.publicationYear = Number(mangaData.publicationYear);
-
-    // Gestisci il campo genre
-    if (mangaData['genre[]']) {
-      mangaData.genre = Array.isArray(mangaData['genre[]']) ? mangaData['genre[]'] : [mangaData['genre[]']];
-      delete mangaData['genre[]'];
-    }
-
-    // Aggiungi l'ID dell'utente che sta creando il manga
-    mangaData.createdBy = user._id;
-
-    console.log('Processed manga data:', mangaData);
-
-    const manga = new Manga(mangaData);
-    await manga.save();
-
+    // Aggiungi il manga al catalogo dell'utente
     user.manga.push({
       manga: manga._id,
       readingStatus: 'to-read',
@@ -263,7 +285,7 @@ router.post('/:id/manga', cloudinaryUploader.single('coverImage'), async (req, r
 
     await user.save();
 
-    res.status(201).json(manga);
+    res.status(201).json({message: 'Manga aggiunto al catalogo con successo', manga: manga});
   } catch (error) {
     console.error('Error adding manga:', error);
     res.status(500).json({message: error.message, stack: error.stack});

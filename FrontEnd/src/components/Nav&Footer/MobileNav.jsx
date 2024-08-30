@@ -1,44 +1,54 @@
+// MobileNav.jsx
+
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../../assets/mori3.svg";
 import LoginButton from "./LoginButton";
 import NavItem from "./NavItem";
-import AnimatedIcon from "./AnimatedIcon"; // Importiamo AnimatedIcon invece di AnimatedSocialIcon
+import AnimatedIcon from "./AnimatedIcon";
 
-// Componente MobileNav
-const MobileNav = ({ userData, navItems, socialItems, location }) => {
-  // Stato per controllare l'apertura/chiusura del menu mobile
+const MobileNav = ({ userData, navItems, socialItems }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const currentLocation = useLocation();
+  const isProfilePage = currentLocation.pathname.includes('/profile');
 
-  // Funzione per aprire/chiudere il menu
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  console.log(userData);
   return (
     <header className="relative w-full">
       <nav className="relative h-20 mx-auto max-w-7xl flex justify-between items-center px-4">
-        {/* Profilo utente o pulsante di login */}
+        
+        {/* Logo o Profilo utente o pulsante di login */}
         <div className="order-1">
-          {userData ? (
-            // Se l'utente è loggato, mostra l'immagine del profilo
-            <img
-              src={userData.profileImage || userData.picture}
-              alt={userData.name}
-              className="w-12 h-12 rounded-lg"
-            />
+          {isProfilePage ? (
+            // Se siamo nella pagina del profilo, mostra il logo a sinistra
+            <Link to="/home">
+              <img src={logo} alt="logo" className="w-20" />
+            </Link>
           ) : (
-            // Se l'utente non è loggato, mostra il pulsante di login
-            <LoginButton />
+            // Altrimenti, mostra l'immagine del profilo o il pulsante di login
+            userData ? (
+              <img
+                src={userData.profileImage || userData.picture}
+                alt={userData.name}
+                className="w-12 h-12 rounded-lg"
+              />
+            ) : (
+              <LoginButton />
+            )
           )}
         </div>
 
-        {/* Logo */}
-        <div className="order-2 absolute left-1/2 transform -translate-x-1/2">
-          <Link to="/home">
-            <img src={logo} alt="logo" className="w-20" />
-          </Link>
-        </div>
+        {/* Logo (mostrato al centro solo se non siamo nella pagina del profilo) */}
+        {!isProfilePage && (
+          <div className="order-2 absolute left-1/2 transform -translate-x-1/2">
+            <Link to="/home">
+              <img src={logo} alt="logo" className="w-20" />
+            </Link>
+          </div>
+        )}
+
 
         {/* Pulsante menu hamburger (mostrato solo se l'utente è loggato) */}
         {userData && (
@@ -79,7 +89,7 @@ const MobileNav = ({ userData, navItems, socialItems, location }) => {
                 href={item.href}
                 icon={item.icon}
                 name={item.name}
-                isActive={location.pathname === item.href}
+                isActive={currentLocation.pathname === item.href}
                 onClick={() => {
                   setIsMenuOpen(false);
                   if (item.onClick) item.onClick();
@@ -108,7 +118,3 @@ const MobileNav = ({ userData, navItems, socialItems, location }) => {
 };
 
 export default MobileNav;
-
-// Questo componente gestisce la navigazione mobile dell'applicazione.
-// Utilizza AnimatedIcon per le icone social e NavItem per gli elementi di navigazione.
-// Il menu mobile si apre e si chiude con un'animazione fluida grazie a Framer Motion.

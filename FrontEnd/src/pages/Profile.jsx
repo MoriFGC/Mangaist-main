@@ -1,17 +1,18 @@
 // Profile.jsx
 
 // Importazioni necessarie per il componente
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getUserById, getUserManga } from "../services/api";
 import { Link } from "react-router-dom";
 import UpdateProfileDialog from "../components/profile/UpdateProfileDialog";
 import { useAuth0 } from "@auth0/auth0-react";
-import { FaCheckCircle, FaBookOpen, FaBook } from "react-icons/fa";
+import { FaCheckCircle, FaBookOpen, FaBook, FaSearch, FaSortAlphaDown } from "react-icons/fa";
 import { followUser, unfollowUser } from "../services/api";
 import ResponsiveProfile from "../components/profile/ResponsiveProfile";
 import { BsGrid3X3, BsBookmarks } from "react-icons/bs";
+
 
 const Profile = ({ updateUserData }) => {
   // Estrae l'ID dall'URL
@@ -21,10 +22,12 @@ const Profile = ({ updateUserData }) => {
   const [profile, setProfile] = useState(null);
   const [userManga, setUserManga] = useState([]);
 
+  // Nuovo stato per la ricerca e l'ordinamento
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortAlphabetically, setSortAlphabetically] = useState(false);
+
   // Stati per gestire l'apertura dei vari dialog
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [isCreateMangaDialogOpen, setIsCreateMangaDialogOpen] = useState(false);
-  const [isCreatePanelDialogOpen, setIsCreatePanelDialogOpen] = useState(false);
 
   //stato per gestire i follow
   const [isFollowing, setIsFollowing] = useState(false);
@@ -97,31 +100,39 @@ const Profile = ({ updateUserData }) => {
     await fetchProfileAndManga();
   };
 
-  // Gestori per la creazione di nuovi manga e pannelli
-  const handleMangaCreation = async (newManga) => {
-    setIsCreateMangaDialogOpen(false);
-    await fetchProfileAndManga();
+  // Funzione per ordinare i manga
+  const sortManga = (mangaList) => {
+    const sortOrder = { reading: 1, "to-read": 2, completed: 3 };
+    return mangaList.sort((a, b) => {
+      if (sortAlphabetically) {
+        return a.title.localeCompare(b.title);
+      } else {
+        return sortOrder[a.readingStatus] - sortOrder[b.readingStatus];
+      }
+    });
   };
 
-  const handlePanelCreation = async (newPanel) => {
-    setIsCreatePanelDialogOpen(false);
-    await fetchProfileAndManga();
-  };
+    // Filtra e ordina i manga usando useMemo per ottimizzare le prestazioni
+    const filteredAndSortedManga = useMemo(() => {
+      return sortManga(userManga.filter(manga => 
+        manga.title.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
+    }, [userManga, searchTerm, sortAlphabetically]);
+
 
   // funzione per il follow
   // Funzione per gestire il follow/unfollow
   const handleFollowToggle = async () => {
+    if (!isAuthenticated) {
+      console.log("Devi essere autenticato per seguire/smettere di seguire");
+      return;
+    }
+  
     try {
-      // Determiniamo quale funzione usare in base allo stato corrente
       const toggleFollow = isFollowing ? unfollowUser : followUser;
-
-      // Chiamiamo la funzione appropriata
       await toggleFollow(profile._id);
-
-      // Aggiorniamo lo stato locale
+  
       setIsFollowing(!isFollowing);
-
-      // Aggiorniamo il conteggio dei follower nel profilo
       setProfile((prevProfile) => ({
         ...prevProfile,
         followers: isFollowing
@@ -129,9 +140,8 @@ const Profile = ({ updateUserData }) => {
           : [...prevProfile.followers, authUser.sub],
       }));
     } catch (error) {
-      // Logghiamo l'errore per il debugging
       console.error("Errore nel seguire/smettere di seguire:", error);
-      // Qui potresti anche mostrare un messaggio di errore all'utente
+      // Qui potresti mostrare un messaggio di errore all'utente
     }
   };
 
@@ -180,31 +190,50 @@ const Profile = ({ updateUserData }) => {
     const renderSectionContent = () => {
       if (activeSection === 'manga') {
         return (
-          <div className="grid grid-cols-3 gap-2">
-            {userManga.map((manga, index) => (
-              <Link to={`/manga/${manga._id}`} key={index}>
-                <motion.div
-                  className="relative overflow-hidden rounded-lg shadow-lg"
-                  style={{ aspectRatio: "2/3" }}
-
-                >
-                  <motion.img
-                    src={manga.coverImage}
-                    alt={manga.title}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
-                    className="w-full h-full object-cover"
-                  />
-                  {renderReadingStatusIcon(manga)}
-                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent">
-                    <p className="text-xs font-semibold text-white truncate">
-                      {manga.title}
-                    </p>
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
-          </div>
+          <>
+            <div className="mb-4 flex items-center">
+              <div className="relative flex-grow">
+                <input
+                  type="text"
+                  placeholder="Cerca manga..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full p-2 pl-8 rounded bg-gray-700 text-white"
+                />
+                <FaSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+              <button
+                onClick={() => setSortAlphabetically(!sortAlphabetically)}
+                className="ml-2 p-2 bg-gray-700 rounded"
+              >
+                <FaSortAlphaDown className={sortAlphabetically ? "text-blue-500" : "text-gray-400"} />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {filteredAndSortedManga.map((manga, index) => (
+                <Link to={`/manga/${manga._id}`} key={index}>
+                  <motion.div
+                    className="relative overflow-hidden rounded-lg shadow-lg"
+                    style={{ aspectRatio: "2/3" }}
+                  >
+                    <motion.img
+                      src={manga.coverImage}
+                      alt={manga.title}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.3 }}
+                      className="w-full h-full object-cover"
+                    />
+                    {renderReadingStatusIcon(manga)}
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent">
+                      <p className="text-xs font-semibold text-white truncate">
+                        {manga.title}
+                      </p>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          </>
         );
       } else {
         return (
@@ -213,7 +242,7 @@ const Profile = ({ updateUserData }) => {
               <Link to={`/panel/${panel._id}`} key={index}>
                 <motion.div
                   className="relative overflow-hidden shadow-lg"
-                  style={{ aspectRatio: "1/1" }} // Formato più verticale per i pannelli
+                  style={{ aspectRatio: "2/3" }} // Formato più verticale per i pannelli
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -224,7 +253,7 @@ const Profile = ({ updateUserData }) => {
                   />
                   <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent">
                     <p className="text-xs font-semibold text-white truncate">
-                      {panel.manga?.title} - Ch.{panel.chapterNumber}
+                      {panel.manga?.title}
                     </p>
                   </div>
                 </motion.div>
@@ -263,12 +292,15 @@ const Profile = ({ updateUserData }) => {
       className="text-white pb-20 md:pb-0 max-w-4xl mx-auto px-4"
     >
       {/* Sezione principale del profilo */}
-      <ResponsiveProfile profile={profile}
+      <ResponsiveProfile
+      profile={profile}
       userManga={userManga}
       setIsUpdateDialogOpen={setIsUpdateDialogOpen}
       handleFollowToggle={handleFollowToggle}
       isFollowing={isFollowing}
-      isProfileOwner={isProfileOwner} />
+      isProfileOwner={isProfileOwner}
+      isAuthenticated={isAuthenticated}
+    />
 
 
       {/* Sezione per le tab dei manga e dei pannelli */}

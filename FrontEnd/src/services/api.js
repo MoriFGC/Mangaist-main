@@ -37,6 +37,7 @@ export const updateUserProfileImage = (userId, imageData) => {
 };
 
 // Manga routes
+export const getDefaultManga = () => api.get('/manga/default');
 export const getAllManga = () => api.get('/manga');
 export const getMangaById = (id) => api.get(`/manga/${id}`);
 export const createManga = (mangaData) => api.post('/manga', mangaData);
@@ -52,20 +53,32 @@ export const addMangaToCatalog = (userId, mangaData) => {
   if (!userId) {
     throw new Error('User ID is required');
   }
-  if (!mangaData) {
-    throw new Error('Manga data is required');
+  
+  let endpoint = `/users/${userId}/manga`;
+  let config = {};
+
+  // Se stiamo aggiungendo un manga predefinito
+  if (mangaData.mangaId) {
+    return api.post(endpoint, { mangaId: mangaData.mangaId });
   }
   
-  // Log dei dati inviati per debug
-  console.log('Sending manga data:', mangaData);
-
-  return api.post(`/users/${userId}/manga`, mangaData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }).catch(error => {
-    // Log dettagliato dell'errore
-    console.error('Error in addMangaToCatalog:', error.response ? error.response.data : error.message);
-    throw error;
+  // Se stiamo creando un nuovo manga personale
+  const formData = new FormData();
+  Object.keys(mangaData).forEach(key => {
+    if (key === 'genre' && Array.isArray(mangaData[key])) {
+      mangaData[key].forEach(genre => formData.append('genre[]', genre));
+    } else if (key === 'coverImage' && mangaData[key] instanceof File) {
+      formData.append(key, mangaData[key], mangaData[key].name);
+    } else {
+      formData.append(key, mangaData[key]);
+    }
   });
+
+  config = {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  };
+
+  return api.post(endpoint, formData, config);
 };
 export const removeMangaFromUserCatalog = (userId, mangaId) => api.delete(`/users/${userId}/manga/${mangaId}`);
 export const getUserMangaProgress = async (userId, mangaId) => {
@@ -158,16 +171,8 @@ export const getConversationMessages = (userId) => api.get(`/messages/${userId}`
 
 //follow fetch
 // Funzione per seguire un utente
-export const followUser = (userId) => {
-  // Facciamo una richiesta POST all'endpoint corretto
-  // Nota: usiamo `api.post` invece di `axios.post` per usare l'istanza configurata
-  return api.post(`/users/${userId}/follow`);
-};
-
-// Funzione per smettere di seguire un utente
-export const unfollowUser = (userId) => {
-  // Facciamo una richiesta POST all'endpoint corretto
-  return api.post(`/users/${userId}/unfollow`);
-};
+// In api.js
+export const followUser = (userId) => api.post(`/users/${userId}/follow`);
+export const unfollowUser = (userId) => api.post(`/users/${userId}/unfollow`);
 
 export default api;

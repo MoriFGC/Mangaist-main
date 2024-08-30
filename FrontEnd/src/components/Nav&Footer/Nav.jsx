@@ -1,5 +1,5 @@
 // src/components/Nav.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { IoMdHome } from "react-icons/io";
@@ -8,7 +8,7 @@ import { BiLogoInstagramAlt } from "react-icons/bi";
 import { FaLinkedin, FaGithub } from "react-icons/fa";
 import { BiSolidUser } from "react-icons/bi";
 import { MdLogout } from "react-icons/md";
-import { getUserById } from "../../services/api";
+import { getUserById, getUserManga } from "../../services/api";
 import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 import BottomNav from "./BottomNav";
@@ -16,6 +16,7 @@ import BottomNav from "./BottomNav";
 export default function Nav({ children }) {
   const { user: auth0User, isAuthenticated, logout } = useAuth0();
   const [userData, setUserData] = useState(null);
+  const [userManga, setUserManga] = useState([]);
   const location = useLocation();
 
   // Effetto per recuperare i dati dell'utente all'avvio e quando cambia l'autenticazione
@@ -27,6 +28,10 @@ export default function Nav({ children }) {
           if (storedUserData && storedUserData.id) {
             const response = await getUserById(storedUserData.id);
             setUserData(response.data);
+
+            // Fetch dei manga dell'utente
+            const mangaResponse = await getUserManga(storedUserData.id);
+            setUserManga(mangaResponse.data.filter((item) => item.manga !== null));
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -35,6 +40,23 @@ export default function Nav({ children }) {
     };
 
     fetchUserData();
+  }, [isAuthenticated, auth0User]);
+
+  const refreshUserData = useCallback(async () => {
+    if (isAuthenticated && auth0User) {
+      try {
+        const storedUserData = JSON.parse(localStorage.getItem("userData"));
+        if (storedUserData && storedUserData.id) {
+          const response = await getUserById(storedUserData.id);
+          setUserData(response.data);
+
+          const mangaResponse = await getUserManga(storedUserData.id);
+          setUserManga(mangaResponse.data.filter((item) => item.manga !== null));
+        }
+      } catch (error) {
+        console.error("Error refreshing user data:", error);
+      }
+    }
   }, [isAuthenticated, auth0User]);
 
   // Funzione per aggiornare i dati dell'utente, inclusa l'immagine del profilo
@@ -93,7 +115,7 @@ export default function Nav({ children }) {
         <main className="p-4 pb-24 md:pb-4">{typeof children === 'function' ? children({ updateUserData }) : children}</main>
 
         {/* Aggiungiamo BottomNav qui */}
-        <BottomNav userData={userData || auth0User} userManga={userData?.manga || []} />
+        <BottomNav userData={userData || auth0User} userManga={userManga} onNewContentCreated={refreshUserData} />
       </div>
     </div>
   );

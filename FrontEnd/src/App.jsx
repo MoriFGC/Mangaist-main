@@ -5,11 +5,10 @@ import Home from './pages/Home';
 import CompleteProfile from './pages/CompleteProfile';
 import Nav from './components/Nav&Footer/Nav'
 import Profile from './pages/Profile';
-import AllManga from './pages/AllManga';
-import AllPanels from './pages/AllPanels';
 import SingleManga from './pages/SingleManga';
 import SinglePanel from './pages/SinglePanel';
 import AllUsers from './pages/AllUsers';
+import Library from './pages/Library';
 
 function App() {
   return (
@@ -21,11 +20,10 @@ function App() {
             <Route path="/complete-profile" element={<CompleteProfile />} />
             <Route path="/home" element={<Home />} />
             <Route path="/profile/:id" element={<Profile updateUserData={updateUserData} />} />
-            <Route path="/all-manga/:userId" element={<AllManga />} />
-            <Route path="/all-panels" element={<AllPanels />} />
             <Route path="/manga/:id" element={<SingleManga />} />
             <Route path="/panel/:id" element={<SinglePanel />} />
             <Route path="/users" element={<AllUsers />} />
+            <Route path="/library" element={<Library />} />
           </Routes>
         )}
       </Nav>

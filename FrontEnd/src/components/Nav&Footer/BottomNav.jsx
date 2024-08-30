@@ -1,11 +1,14 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Aggiungiamo useNavigate
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlinePlus, AiOutlineHome, AiOutlineUser } from "react-icons/ai";
 import CreateMangaDialog from "../profile/CreateMangaDialog";
 import CreatePanelDialog from "../profile/CreatePanelDialog";
 
-const BottomNav = ({ userData, userManga }) => {
+const BottomNav = ({ userData, userManga, onNewContentCreated }) => {
+
+  const navigate = useNavigate(); // Hook per la navigazione
+
   // Stati per gestire l'apertura dei dialoghi
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreateMangaDialogOpen, setIsCreateMangaDialogOpen] = useState(false);
@@ -35,14 +38,16 @@ const BottomNav = ({ userData, userManga }) => {
   // Gestori per la creazione di manga e pannelli
   const handleMangaCreation = (newManga) => {
     setIsCreateMangaDialogOpen(false);
-    // Qui puoi aggiungere la logica per aggiornare lo stato dell'app con il nuovo manga
+    onNewContentCreated(); // Chiamiamo la funzione di callback
+    navigate(`/manga/${newManga._id}`); // Navighiamo alla pagina del nuovo manga
   };
+
 
   const handlePanelCreation = (newPanel) => {
     setIsCreatePanelDialogOpen(false);
-    // Qui puoi aggiungere la logica per aggiornare lo stato dell'app con il nuovo pannello
+    onNewContentCreated(); // Chiamiamo la funzione di callback
+    navigate(`/panel/${newPanel._id}`); // Navighiamo alla pagina del nuovo pannello
   };
-
   return (
     <>
       {/* Barra di navigazione mobile */}

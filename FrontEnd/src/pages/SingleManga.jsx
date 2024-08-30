@@ -33,6 +33,9 @@ export default function SingleManga() {
   const [isOwner, setIsOwner] = useState(false);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
 
+  // Nuovo stato per tracciare se il manga è nella collezione dell'utente
+  const [isInUserCollection, setIsInUserCollection] = useState(false);
+
   // Effetto per caricare i dati del manga e il progresso dell'utente
   useEffect(() => {
     const fetchData = async () => {
@@ -42,40 +45,28 @@ export default function SingleManga() {
         if (userData && userData.id) {
           setUserId(userData.id);
 
-          // PROBLEMA: Questa comparazione non è corretta
-          // setIsCurrentUser(userData.id === id);
-          // Il 'id' qui è l'ID del manga, non l'ID dell'utente
-          // Dovremmo confrontare con l'ID del creatore del manga
-
           const mangaResponse = await getMangaById(id);
           setManga(mangaResponse.data);
 
-          // CORREZIONE: Confrontiamo l'ID dell'utente con l'ID del creatore del manga
           setIsCurrentUser(userData.id === mangaResponse.data.createdBy);
           setIsOwner(userData.id === mangaResponse.data.createdBy);
 
-          // Recuperiamo il progresso solo se l'utente è il proprietario
-          if (userData.id === mangaResponse.data.createdBy) {
-            try {
-              const progressResponse = await getUserMangaProgress(
-                userData.id,
-                id
-              );
-              if (progressResponse.data) {
-                setUserProgress({
-                  currentChapter: progressResponse.data.currentChapter || 0,
-                  currentVolume: progressResponse.data.currentVolume || 0,
-                  readingStatus:
-                  progressResponse.data.readingStatus || "to-read",
-                });
-              }
-            } catch (progressError) {
-              console.log("User progress not found, setting default values");
-              setUserProgress({
-                currentChapter: 0,
-                currentVolume: 0,
-              });
-            }
+          // Verifica se il manga è nella collezione dell'utente
+          const userMangaResponse = await getUserMangaProgress(userData.id, id);
+          setIsInUserCollection(!!userMangaResponse.data);
+
+          if (userMangaResponse.data) {
+            setUserProgress({
+              currentChapter: userMangaResponse.data.currentChapter || 0,
+              currentVolume: userMangaResponse.data.currentVolume || 0,
+              readingStatus: userMangaResponse.data.readingStatus || "to-read",
+            });
+          } else {
+            setUserProgress({
+              currentChapter: 0,
+              currentVolume: 0,
+              readingStatus: "to-read",
+            });
           }
         } else {
           console.error("User data not found in localStorage");
@@ -87,7 +78,8 @@ export default function SingleManga() {
       }
     };
     fetchData();
-  }, [id]); // Rimuoviamo isCurrentUser dalle dipendenze per evitare loop
+  }, [id]);
+  
   // Gestore per l'aggiornamento del progresso di lettura
   const handleProgressChange = async (type, value) => {
     const newProgress = { ...userProgress, [type]: value };
@@ -201,7 +193,8 @@ export default function SingleManga() {
       </motion.div>
 
       {/* Reading Progress section */}
-      {isCurrentUser ? (
+      {/* Reading Progress section */}
+      {(isCurrentUser || (manga.isDefault && isInUserCollection)) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -223,23 +216,6 @@ export default function SingleManga() {
             max={manga.volumes}
             onChange={(value) => handleProgressChange("currentVolume", value)}
           />
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8 bg-gray-700 rounded-lg p-6"
-        >
-          <h2 className="text-2xl font-bold text-white mb-4">
-            Owner's Reading Progress
-          </h2>
-          <p className="text-white">
-            Chapters Read: {userProgress.currentChapter} / {manga.chapters}
-          </p>
-          <p className="text-white">
-            Volumes Read: {userProgress.currentVolume} / {manga.volumes}
-          </p>
         </motion.div>
       )}
 

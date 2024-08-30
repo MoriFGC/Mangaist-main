@@ -2,6 +2,7 @@ import express from 'express';
 import Manga from '../models/Manga.js';
 import cloudinaryUploader from '../config/cloudinaryConfig.js';
 import User from '../models/User.js';
+import { authMiddleware } from '../middlewares/authMiddlewares.js';
 
 const router = express.Router();
 
@@ -13,6 +14,16 @@ router.get('/', async (req, res) => {
     res.json(manga);
   } catch (error) {
     res.status(500).json({message: error.message});
+  }
+});
+
+// GET tutti i manga predefiniti
+router.get('/default', authMiddleware, async (req, res) => {
+  try {
+    const defaultManga = await Manga.find({ isDefault: true });
+    res.json(defaultManga);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
