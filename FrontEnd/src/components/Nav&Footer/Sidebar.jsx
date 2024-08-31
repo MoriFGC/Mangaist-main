@@ -9,31 +9,38 @@ import AnimatedSocialIcon from "./AnimatedSocialIcon";
 
 const Sidebar = ({ userData, navItems, socialItems }) => {
   const currentLocation = useLocation();
-  const isProfilePage = currentLocation.pathname.includes('/profile');
+  const isProfilePage = currentLocation.pathname.includes("/profile");
 
   return (
     <div className="fixed left-0 top-0 h-full w-64 text-white p-5 flex flex-col border-r border-r-text/30">
+      {/* Logo (mostrato al centro solo se non siamo nella pagina del profilo) */}
+      {!isProfilePage && (
+        <div className="flex justify-center">
+          <Link to="/home">
+            <img src={logo} alt="logo" className="w-40" />
+          </Link>
+        </div>
+      )}
+
       {/* Logo o Profilo utente */}
       <div className="mb-8">
         {isProfilePage ? (
           // Se siamo nella pagina del profilo, mostra un logo più grande
           <img src={logo} alt="logo" className="w-40 h-40 mx-auto" />
+        ) : // Altrimenti, mostra il logo normale o l'immagine del profilo/pulsante di login
+        userData ? (
+          <img
+            src={userData.profileImage || userData.picture}
+            alt={userData.name}
+            className="w-52 h-52 rounded-lg mx-auto"
+          />
         ) : (
-          // Altrimenti, mostra il logo normale o l'immagine del profilo/pulsante di login
-          userData ? (
-            <img
-              src={userData.profileImage || userData.picture}
-              alt={userData.name}
-              className="w-52 h-52 rounded-lg mx-auto"
-            />
-          ) : (
-            <>
-              <img src={logo} alt="logo" className="w-20 mx-auto mb-4" />
-              <div className="flex justify-center">
-                <LoginButton />
-              </div>
-            </>
-          )
+          <>
+            <img src={logo} alt="logo" className="w-20 mx-auto mb-4" />
+            <div className="flex justify-center">
+              <LoginButton />
+            </div>
+          </>
         )}
       </div>
 
