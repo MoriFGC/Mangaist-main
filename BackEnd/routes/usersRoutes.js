@@ -6,6 +6,42 @@ import { authMiddleware, isAdmin, isAuthorizedForManga } from '../middlewares/au
 
 const router = express.Router();
 
+// GET tutti i pannelli
+router.get('/allPanels', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = parseInt(req.query.skip) || 0;
+    
+    const panels = await User.aggregate([
+      { $unwind: '$favoritePanels' },
+      { $sort: { 'favoritePanels.createdAt': -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          _id: '$favoritePanels._id',
+          panelImage: '$favoritePanels.panelImage',
+          description: '$favoritePanels.description',
+          createdAt: '$favoritePanels.createdAt',
+          likes: '$favoritePanels.likes',
+          comments: { $size: '$favoritePanels.comments' },
+          user: {
+            _id: '$_id',
+            name: '$name',
+            nickname: '$nickname',
+            profileImage: '$profileImage'
+          }
+        }
+      }
+    ]);
+
+    res.json(panels);
+  } catch (error) {
+    console.error('Errore nel recupero dei pannelli:', error);
+    res.status(500).json({ message: 'Errore interno del server' });
+  }
+});
+
 router.get('/public', async (req, res) => {
   try {
     const users = await User.find()
@@ -511,8 +547,8 @@ router.delete('/:userId/favoritePanels/:panelId', async (req, res) => {
     res.status(500).json({message: error.message});
   }
 });
-
-// Modifica la route per i like
+//-------- rotta per i like ------------------------------
+// POST per mettere/togliere like a un pannello
 router.post('/panels/:panelId/like', authMiddleware, async (req, res) => {
   try {
     const user = await User.findOne({ 'favoritePanels._id': req.params.panelId });
@@ -520,28 +556,31 @@ router.post('/panels/:panelId/like', authMiddleware, async (req, res) => {
       return res.status(404).json({message: 'Pannello non trovato'});
     }
 
-    const panelIndex = user.favoritePanels.findIndex(p => p._id.toString() === req.params.panelId);
-    const currentPanel = user.favoritePanels[panelIndex];
+    const panel = user.favoritePanels.id(req.params.panelId);
+    const userId = req.user._id;
 
-    const likeIndex = currentPanel.likes.indexOf(req.user._id);
+    const likeIndex = panel.likes.indexOf(userId);
     if (likeIndex > -1) {
-      currentPanel.likes.splice(likeIndex, 1);
+      panel.likes.splice(likeIndex, 1);
     } else {
-      currentPanel.likes.push(req.user._id);
+      panel.likes.push(userId);
     }
 
     await user.save();
 
-    // Popola i dati dell'utente e i dati degli utenti nei commenti
-    await user.populate('favoritePanels.user', 'name nickname profileImage');
-    await user.populate('favoritePanels.comments.user', 'name nickname profileImage');
-
-    res.json({ message: 'Like aggiornato con successo', panel: currentPanel });
+    res.json({ 
+      panelId: panel._id,
+      likes: panel.likes,
+      isLiked: panel.likes.includes(userId)
+    });
   } catch (error) {
     console.error('Errore nel toggle del like:', error);
-    res.status(500).json({message: error.message});
+    res.status(500).json({message: 'Errore interno del server'});
   }
 });
+
+//---------------------------------------------------------------------
+//------------ rotta per i commenti -----------------------------------
 
 router.post('/panels/:panelId/comment', authMiddleware, async (req, res) => {
   try {
@@ -629,6 +668,5 @@ router.post('/:id/unfollow', authMiddleware, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 export default router;

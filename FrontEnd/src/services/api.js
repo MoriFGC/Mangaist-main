@@ -156,7 +156,8 @@ export const getPanelById = async (panelId) => {
 // Aggiorniamo queste funzioni per assicurarci che gli URL siano corretti
 // Modifica la funzione likePanel
 export const likePanel = async (panelId) => {
-  return api.post(`/users/panels/${panelId}/like`);
+  const response = await api.post(`/users/panels/${panelId}/like`);
+  return response.data;
 };
 
 export const commentPanel = (panelId, commentData) => api.post(`/users/panels/${panelId}/comment`, commentData);
@@ -174,5 +175,15 @@ export const getConversationMessages = (userId) => api.get(`/messages/${userId}`
 // In api.js
 export const followUser = (userId) => api.post(`/users/${userId}/follow`);
 export const unfollowUser = (userId) => api.post(`/users/${userId}/unfollow`);
+
+
+
+export const getAllPanels = (limit = 10, skip = 0) => 
+  api.get(`/users/allPanels?limit=${limit}&skip=${skip}`);
+
+
+
+export const getFollowedPanels = (limit = 10, skip = 0) => 
+  api.get(`/users/followedPanels?limit=${limit}&skip=${skip}`);
 
 export default api;
