@@ -24,7 +24,7 @@ router.get('/allPanels', async (req, res) => {
           description: '$favoritePanels.description',
           createdAt: '$favoritePanels.createdAt',
           likes: '$favoritePanels.likes',
-          comments: { $size: '$favoritePanels.comments' },
+          comments: '$favoritePanels.comments',
           user: {
             _id: '$_id',
             name: '$name',
@@ -34,6 +34,12 @@ router.get('/allPanels', async (req, res) => {
         }
       }
     ]);
+
+    // Popoliamo i dati degli utenti per i commenti
+    await User.populate(panels, {
+      path: 'comments.user',
+      select: 'name nickname profileImage'
+    });
 
     res.json(panels);
   } catch (error) {

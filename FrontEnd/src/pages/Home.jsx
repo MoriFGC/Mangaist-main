@@ -1,9 +1,11 @@
 // Home.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import { getAllPanels, getFollowedPanels, likePanel } from "../services/api";
+import { getAllPanels, getPanelById, likePanel } from "../services/api";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaHeart, FaRegHeart, FaRegComment } from "react-icons/fa";
+import DesktopCommentsDialog from "../components/home/DesktopCommentsDialog";
+import MobileCommentsSheet from "../components/home/MobileCommentsSheet";
 
 const Home = () => {
   // Stati per gestire i pannelli, errori, caricamento e paginazione
@@ -12,6 +14,8 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [showFollowed, setShowFollowed] = useState(false);
+  const [selectedPanel, setSelectedPanel] = useState(null);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
   // Ottieni l'ID dell'utente corrente dal localStorage
   const userData = JSON.parse(localStorage.getItem("userData"));
@@ -102,13 +106,13 @@ const Home = () => {
     try {
       const response = await likePanel(panelId);
       if (response) {
-        setPanels(prevPanels =>
-          prevPanels.map(panel =>
+        setPanels((prevPanels) =>
+          prevPanels.map((panel) =>
             panel._id === response.panelId
-              ? { 
-                  ...panel, 
+              ? {
+                  ...panel,
                   likes: response.likes,
-                  isLiked: response.isLiked
+                  isLiked: response.isLiked,
                 }
               : panel
           )
@@ -118,35 +122,39 @@ const Home = () => {
       console.error("Errore nel mettere like al pannello:", error);
     }
   };
-  
-  console.log(panels);
+
+  const openComments = async (panel) => {
+    setIsCommentsOpen(true);
+    try {
+      const response = await getPanelById(panel._id);
+      console.log("API response:", response.data); // Aggiungi questo
+      setSelectedPanel(response.data);
+    } catch (error) {
+      console.error("Error fetching panel details:", error);
+      setSelectedPanel(null);
+    }
+  };
+
+  const closeComments = () => {
+    setIsCommentsOpen(false);
+    setSelectedPanel(null);
+  };
+
+  const refreshPanel = async () => {
+    if (selectedPanel) {
+      try {
+        const response = await getPanelById(selectedPanel._id);
+        setSelectedPanel(response.data);
+      } catch (error) {
+        console.error("Errore nel refresh del pannello:", error);
+      }
+    }
+  };
+
+  //console.log(panels);
 
   return (
     <div className="container mx-auto px-0 py-8">
-      {/* Tab per switch tra "Tutti i pannelli" e "Pannelli seguiti" */}
-      <div className="flex justify-center mb-8">
-        <button
-          onClick={() => setShowFollowed(false)}
-          className={`mx-2 px-4 py-2 rounded-full ${
-            !showFollowed
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
-          }`}
-        >
-          Global
-        </button>
-        <button
-          onClick={() => setShowFollowed(true)}
-          className={`mx-2 px-4 py-2 rounded-full ${
-            showFollowed
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
-          }`}
-        >
-          Followed
-        </button>
-      </div>
-
       {error && <p className="text-red-500 mb-4">{error}</p>}
 
       {/* Lista dei pannelli in stile Instagram */}
@@ -168,7 +176,7 @@ const Home = () => {
               />
               <Link
                 to={`/profile/${panel.user._id}`}
-                className="font-semibold text-white hover:underline"
+                className="font-semibold text-white hover:text-blue-500 hover:underline transition-all duration-200 ease-in"
               >
                 {panel.user.nickname}
               </Link>
@@ -179,7 +187,7 @@ const Home = () => {
               <img
                 src={panel.panelImage}
                 alt="Panel"
-                className="w-full h-full object-contain border border-white/30"
+                className="w-full h-full object-contain"
               />
             </div>
 
@@ -203,9 +211,9 @@ const Home = () => {
                     )}
                   </motion.button>
                 </AnimatePresence>
-                <Link to={`/panel/${panel._id}`}>
-                  <FaRegComment className="text-2xl text-white" />
-                </Link>
+                <button onClick={() => openComments(panel)}>
+                  <FaRegComment className="text-2xl text-white hover:text-blue-500" />
+                </button>
               </div>
               <p className="font-bold text-white">{panel.likes.length} likes</p>
               <p className="mt-1 text-white">
@@ -222,6 +230,24 @@ const Home = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Rendering condizionale per desktop e mobile */}
+      {typeof window !== "undefined" && window.innerWidth >= 768 ? (
+        <DesktopCommentsDialog
+          isOpen={isCommentsOpen}
+          closeDialog={closeComments}
+          panel={selectedPanel}
+          handleLike={handleLike}
+          refreshPanel={refreshPanel}
+        />
+      ) : (
+        <MobileCommentsSheet
+          isOpen={isCommentsOpen}
+          closeSheet={closeComments}
+          panel={selectedPanel}
+          refreshPanel={refreshPanel}
+        />
+      )}
 
       {loading && <p className="text-white mt-4 text-center">Loading...</p>}
       {!hasMore && (
