@@ -186,4 +186,6 @@ export const getAllPanels = (limit = 10, skip = 0) =>
 export const getFollowedPanels = (limit = 10, skip = 0) => 
   api.get(`/users/followedPanels?limit=${limit}&skip=${skip}`);
 
+export const getFollowedUsers = (userId) => api.get(`/users/${userId}/following`);
+
 export default api;

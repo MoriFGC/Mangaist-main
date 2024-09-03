@@ -15,9 +15,9 @@ const CommentList = ({ panel }) => {
     }
 
   return (
-    <div className="space-y-4 mt-5">
+    <div>
       {comments.map((comment, index) => (
-        <div key={index} className="flex items-center space-x-3 p-3 ">
+        <div key={index} className="flex items-center space-x-3 p-3 border-b border-gray-700">
           <img
             src={comment.user?.profileImage || "/placeholder-avatar.jpg"}
             alt={`${comment.user?.name || 'User'}'s avatar`}

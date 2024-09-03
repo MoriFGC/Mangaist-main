@@ -48,6 +48,51 @@ router.get('/allPanels', async (req, res) => {
   }
 });
 
+// GET pannelli degli utenti seguiti
+router.get('/followedPanels', authMiddleware, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = parseInt(req.query.skip) || 0;
+    
+    const user = await User.findById(req.user._id).populate('following');
+    const followedUserIds = user.following.map(u => u._id);
+
+    const panels = await User.aggregate([
+      { $match: { _id: { $in: followedUserIds } } },
+      { $unwind: '$favoritePanels' },
+      { $sort: { 'favoritePanels.createdAt': -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          _id: '$favoritePanels._id',
+          panelImage: '$favoritePanels.panelImage',
+          description: '$favoritePanels.description',
+          createdAt: '$favoritePanels.createdAt',
+          likes: '$favoritePanels.likes',
+          comments: '$favoritePanels.comments',
+          user: {
+            _id: '$_id',
+            name: '$name',
+            nickname: '$nickname',
+            profileImage: '$profileImage'
+          }
+        }
+      }
+    ]);
+
+    await User.populate(panels, {
+      path: 'comments.user',
+      select: 'name nickname profileImage'
+    });
+
+    res.json(panels);
+  } catch (error) {
+    console.error('Errore nel recupero dei pannelli seguiti:', error);
+    res.status(500).json({ message: 'Errore interno del server' });
+  }
+});
+
 router.get('/public', async (req, res) => {
   try {
     const users = await User.find()
@@ -218,6 +263,19 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// GET utenti seguiti
+router.get('/:userId/following', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).populate('following', 'name nickname profileImage');
+    if (!user) {
+      return res.status(404).json({message: 'Utente non trovato'});
+    }
+    res.json(user.following);
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+});
+
 
 
 //------------------------ USER MANGA -----------------------------------------------
@@ -239,7 +297,6 @@ router.get('/:userId/manga/:mangaId', async (req, res) => {
 });
 
 // GET manga di uno specifico utente
-
 router.get('/:id/manga', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).populate('manga.manga');
@@ -253,13 +310,15 @@ router.get('/:id/manga', async (req, res) => {
       author: item.manga.author,
       currentChapter: item.currentChapter,
       currentVolume: item.currentVolume,
-      readingStatus: item.readingStatus  // Assicurati che questo campo venga restituito
+      totalChapters: item.manga.chapters, // Aggiungiamo il numero totale di capitoli
+      readingStatus: item.readingStatus
     }));
     res.json(userMangaData);
   } catch (error) {
     res.status(500).json({message: error.message});
   }
 });
+
 // POST aggiungi manga al catalogo dell'utente
 
 // usersRoutes.js

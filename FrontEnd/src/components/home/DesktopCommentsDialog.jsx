@@ -1,10 +1,10 @@
-// src/components/DesktopCommentsDialog.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import CommentList from "./CommentList";
 import { Link } from "react-router-dom";
-import { FaHeart, FaRegHeart, FaRegComment } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaRegComment, FaPaperPlane } from "react-icons/fa";
 import { commentPanel } from "../../services/api";
+import { motion, AnimatePresence } from "framer-motion";
 
 const DesktopCommentsDialog = ({
   isOpen,
@@ -14,97 +14,136 @@ const DesktopCommentsDialog = ({
   refreshPanel,
 }) => {
   const [newComment, setNewComment] = useState("");
-
-  if (!panel) {
-    return null;
-  }
-
-  // Ottieni l'ID dell'utente corrente dal localStorage
+  const [localPanel, setLocalPanel] = useState(panel);
   const userData = JSON.parse(localStorage.getItem("userData"));
+
+  useEffect(() => {
+    setLocalPanel(panel);
+  }, [panel]);
+
+  if (!localPanel) return null;
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
     try {
-      await commentPanel(panel._id, { text: newComment });
-      setNewComment(""); // Pulisce l'input dopo l'invio
-      refreshPanel(); // Aggiorna il pannello per mostrare il nuovo commento
+      await commentPanel(localPanel._id, { text: newComment });
+      setNewComment("");
+      refreshPanel();
     } catch (error) {
       console.error("Errore nell'invio del commento:", error);
     }
   };
 
+  const handleLocalLike = async () => {
+    try {
+      const updatedPanel = await handleLike(localPanel._id);
+      setLocalPanel(updatedPanel);
+    } catch (error) {
+      console.error("Errore nell'aggiornamento del like:", error);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onClose={closeDialog} className="relative z-50">
-      <div className="fixed inset-0 bg-black/70" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-6xl h-[80vh] flex bg-black rounded-lg overflow-hidden">
+      <div className="fixed inset-0 bg-black/70 " aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center p-4 ">
+        <Dialog.Panel className="w-full max-w-6xl h-[80vh] flex bg-black rounded-lg overflow-hidden shadow-lg border border-gray-700">
           {/* Sezione immagine */}
-          <div className="w-7/12 h-full bg-black flex items-center justify-center overflow-hidden">
+          <div className="w-1/2 bg-black flex items-center justify-center p-4">
             <img
-              src={panel.panelImage}
+              src={localPanel.panelImage}
               alt="Panel"
-              className="w-full h-full object-cover"
+              className="max-w-full max-h-[90vh] object-contain"
             />
           </div>
 
-          {/* Sezione commenti */}
-          <div className="w-5/12 h-full flex flex-col">
-            {/* Header con informazioni utente e descrizione */}
+          {/* Sezione commenti e dettagli */}
+          <div className="w-1/2 flex flex-col overflow-hidden border-l border-gray-700">
+            {/* Header con informazioni utente */}
             <div className="p-4 border-b border-gray-700">
               <Link
-                to={`/profile/${panel.user._id}`}
-                className="font-semibold text-white hover:underline flex items-center mb-2"
+                to={`/profile/${localPanel.user._id}`}
+                className="flex items-center mb-2"
               >
                 <img
-                  src={panel.user.profileImage || "/placeholder-avatar.jpg"}
-                  alt={`${panel.user.name}'s avatar`}
-                  className="w-8 h-8 rounded-full mr-3"
+                  src={localPanel.user.profileImage || "/placeholder-avatar.jpg"}
+                  alt={`${localPanel.user.name}'s Avatar`}
+                  className="w-10 h-10 rounded-full mr-3"
                 />
-                <span className="font-semibold">{panel.user.nickname}</span>
+                <div>
+                  <h2 className="font-bold text-white">{localPanel.user.name}</h2>
+                  <p className="text-gray-400">@{localPanel.user.nickname}</p>
+                </div>
               </Link>
-              <p className="text-white ms-10">{panel.description}</p>
+              <p className="text-white mt-2">{localPanel.description}</p>
+              <p className="text-gray-400 mt-2">
+                From {localPanel.manga?.title}, Chapter {localPanel.chapterNumber}
+              </p>
+            </div>
+
+            {/* Pulsanti di interazione */}
+            <div className="flex justify-around p-4 border-b border-gray-700">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleLocalLike}
+                className="flex items-center group"
+              >
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={localPanel.likes.includes(userData.id) ? "liked" : "unliked"}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {localPanel.likes.includes(userData.id) ? (
+                      <FaHeart className="mr-2 text-red-500" />
+                    ) : (
+                      <FaRegHeart className="mr-2 text-white group-hover:text-red-500" />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+                <span className="text-white">{localPanel.likes.length}</span>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="flex items-center text-white group"
+              >
+                <FaRegComment className="mr-2 group-hover:text-blue-500" />
+                <span>{localPanel.comments.length}</span>
+              </motion.button>
             </div>
 
             {/* Lista commenti */}
-            <div className="flex-grow overflow-y-auto">
-              <CommentList panel={panel} />
+            <div className="flex-grow overflow-y-auto scrollbar-thin">
+              <CommentList panel={localPanel} />
             </div>
 
-            {/* Footer con like e form per nuovo commento */}
-            <div className="p-4 border-t border-gray-700">
-              <div className="flex items-center mb-4">
-                <button onClick={() => handleLike(panel._id)} className="mr-4">
-                  {panel.likes.includes(userData.id) ? (
-                    <FaHeart className="text-red-500 text-2xl" />
-                  ) : (
-                    <FaRegHeart className="text-white text-2xl" />
-                  )}
-                </button>
-                <p className="font-bold text-white">{panel.likes.length} likes</p>
-              </div>
-
-              {/* Form per aggiungere un nuovo commento */}
-              <form
-                onSubmit={handleSubmitComment}
-                className="flex gap-1"
+            {/* Form per aggiungere un commento */}
+            <form
+              onSubmit={handleSubmitComment}
+              className="p-4 border-t border-gray-700 flex items-center relative"
+            >
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                className="flex-grow p-2 bg-black rounded-l text-white"
+              />
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="hover:text-blue-500 text-white p-3 rounded-r absolute end-5"
               >
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Aggiungi un commento..."
-                  className="w-full rounded bg-black text-white"
-                />
-                <button
-                  type="submit"
-                  className="p-4 bg-black text-white rounded border border-white/50 hover:bg-blue-600 hover:border-black transition-all duration-300 ease-linear"
-                >
-                  <FaRegComment />
-                </button>
-              </form>
-            </div>
+                <FaPaperPlane />
+              </motion.button>
+            </form>
           </div>
         </Dialog.Panel>
       </div>

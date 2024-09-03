@@ -32,7 +32,7 @@ const MobileCommentsSheet = ({ isOpen, closeSheet, panel, refreshPanel }) => {
       {/* Header fisso */}
       <div className="sticky top-0 bg-button-bg z-10 p-4">
         <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-        <h3 className="text-lg font-semibold mb-4 text-white">Comments</h3>
+        <h3 className="text-lg font-semibold mb-4 text-white text-center ">Comments</h3>
       </div>
 
       {/* Lista dei commenti scrollabile */}
