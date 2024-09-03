@@ -198,13 +198,13 @@ const Profile = ({ updateUserData }) => {
                   placeholder="Cerca manga..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full p-2 pl-8 rounded bg-gray-700 text-white"
+                  className="w-full p-2 pl-8 rounded bg-black text-white"
                 />
                 <FaSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
               <button
                 onClick={() => setSortAlphabetically(!sortAlphabetically)}
-                className="ml-2 p-2 bg-gray-700 rounded"
+                className="ml-2 p-3 bg-black rounded hover:border hover:border-white transition-all duration-100 ease-linear"
               >
                 <FaSortAlphaDown className={sortAlphabetically ? "text-blue-500" : "text-gray-400"} />
               </button>

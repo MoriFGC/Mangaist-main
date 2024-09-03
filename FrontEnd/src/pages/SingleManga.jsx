@@ -12,6 +12,7 @@ import ProgressSelector from "../components/singleManga/ProgressSelector";
 import UpdateMangaForm from "../components/singleManga/UpdateMangaForm";
 import DeleteMangaButton from "../components/singleManga/DeleteMangaButton";
 import { useAuth0 } from "@auth0/auth0-react";
+import InfiniteCharacterScroll from "../components/singleManga/InfiniteCharacterScroll";
 
 export default function SingleManga() {
   // Estrae l'ID del manga dall'URL
@@ -35,6 +36,7 @@ export default function SingleManga() {
 
   // Nuovo stato per tracciare se il manga è nella collezione dell'utente
   const [isInUserCollection, setIsInUserCollection] = useState(false);
+
 
   // Effetto per caricare i dati del manga e il progresso dell'utente
   useEffect(() => {
@@ -79,7 +81,7 @@ export default function SingleManga() {
     };
     fetchData();
   }, [id]);
-  
+
   // Gestore per l'aggiornamento del progresso di lettura
   const handleProgressChange = async (type, value) => {
     const newProgress = { ...userProgress, [type]: value };
@@ -149,49 +151,77 @@ export default function SingleManga() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gray-800 rounded-lg overflow-hidden shadow-lg"
+        className="rounded-lg overflow-hidden shadow-lg "
       >
         <div className="md:flex">
-          <div className="md:flex-shrink-0">
+          {/* Immagine del manga */}
+          <div className="md:w-1/3">
             <img
-              className="h-48 w-full object-cover md:w-48"
+              className="w-full h-full object-contain"
               src={manga.coverImage}
               alt={manga.title}
             />
           </div>
-          <div className="p-8">
-            <div className="uppercase tracking-wide text-sm text-indigo-500 font-semibold">
-              {manga.demographics}
-            </div>
-            <h1 className="block mt-1 text-lg leading-tight font-medium text-white">
+
+          {/* Dettagli del manga */}
+          <div className="md:w-2/3 p-8">
+            {/* Titolo e autore */}
+            <h1 className="text-3xl font-bold text-white mb-2">
               {manga.title}
             </h1>
-            <p className="mt-2 text-gray-400">By {manga.author}</p>
-            <p className="mt-2 text-white">{manga.description}</p>
-            <div className="mt-4">
-              <span className="inline-block bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2">
-                {manga.status}
-              </span>
+            <p className="text-xl text-gray-400 mb-4">by {manga.author}</p>
+
+            {/* Descrizione */}
+            <p className="text-white mb-6">{manga.description}</p>
+
+            {/* Informazioni aggiuntive */}
+            <div className="grid grid-cols-2 gap-4 text-white">
+              <div>
+                <span className="font-semibold">Demographics:</span>{" "}
+                {manga.demographics}
+              </div>
+              <div>
+                <span className="font-semibold">Status:</span> {manga.status}
+              </div>
+              <div>
+                <span className="font-semibold">Volumes:</span> {manga.volumes}
+              </div>
+              <div>
+                <span className="font-semibold">Chapters:</span>{" "}
+                {manga.chapters}
+              </div>
+              <div>
+                <span className="font-semibold">Publication Year:</span>{" "}
+                {manga.publicationYear}
+              </div>
+            </div>
+
+            {/* Generi */}
+            <div className="mt-6">
               {manga.genre.map((genre, index) => (
                 <span
                   key={index}
-                  className="inline-block bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2"
+                  className="inline-block bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2 mb-2"
                 >
                   {genre}
                 </span>
               ))}
             </div>
-            <div className="mt-4">
-              <p className="text-white">Volumes: {manga.volumes}</p>
-              <p className="text-white">Chapters: {manga.chapters}</p>
-              <p className="text-white">
-                Publication Year: {manga.publicationYear}
-              </p>
-            </div>
           </div>
         </div>
       </motion.div>
 
+      {/* Sezione dei personaggi */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="mt-8"
+      >
+        <h2 className="text-2xl font-bold text-white mb-4">Characters</h2>
+        <InfiniteCharacterScroll characters={manga.characters} />
+      </motion.div>
+      
       {/* Reading Progress section */}
       {/* Reading Progress section */}
       {(isCurrentUser || (manga.isDefault && isInUserCollection)) && (
