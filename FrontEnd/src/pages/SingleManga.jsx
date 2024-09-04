@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { FaUserPlus, FaEdit, FaTrash } from "react-icons/fa";
 import {
   getMangaById,
   getUserMangaProgress,
@@ -11,7 +12,6 @@ import AddCharacterForm from "../components/singleManga/AddCharacterForm";
 import ProgressSelector from "../components/singleManga/ProgressSelector";
 import UpdateMangaForm from "../components/singleManga/UpdateMangaForm";
 import DeleteMangaButton from "../components/singleManga/DeleteMangaButton";
-import { useAuth0 } from "@auth0/auth0-react";
 import InfiniteCharacterScroll from "../components/singleManga/InfiniteCharacterScroll";
 
 export default function SingleManga() {
@@ -37,6 +37,10 @@ export default function SingleManga() {
   // Nuovo stato per tracciare se il manga è nella collezione dell'utente
   const [isInUserCollection, setIsInUserCollection] = useState(false);
 
+  const [isAddCharacterDialogOpen, setIsAddCharacterDialogOpen] =
+    useState(false);
+  const [isEditMangaDialogOpen, setIsEditMangaDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Effetto per caricare i dati del manga e il progresso dell'utente
   useEffect(() => {
@@ -84,20 +88,18 @@ export default function SingleManga() {
 
   // Gestore per l'aggiornamento del progresso di lettura
   const handleProgressChange = async (type, value) => {
-    const newProgress = { ...userProgress, [type]: value };
+    const newProgress = {
+      ...userProgress,
+      [type === "chapters" ? "currentChapter" : "currentVolume"]: value,
+    };
 
     // Determina il nuovo stato di lettura
     let newReadingStatus;
-    if (
-      value === 0 &&
-      (type === "currentChapter"
-        ? userProgress.currentVolume
-        : newProgress.currentVolume) === 0
-    ) {
+    if (newProgress.currentChapter === 0 && newProgress.currentVolume === 0) {
       newReadingStatus = "to-read";
     } else if (
-      value >= manga.chapters ||
-      (type === "currentVolume" && value >= manga.volumes)
+      newProgress.currentChapter >= manga.chapters ||
+      newProgress.currentVolume >= manga.volumes
     ) {
       newReadingStatus = "completed";
     } else {
@@ -164,7 +166,25 @@ export default function SingleManga() {
           </div>
 
           {/* Dettagli del manga */}
-          <div className="md:w-2/3 p-8">
+          <div className="md:w-2/3 p-8 relative">
+            {isOwner && (
+              <div className="absolute top-4 right-4 flex space-x-2">
+                <button
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-white p-2 rounded border border-transparent hover:border-red-500 hover:text-red-600 transition duration-300"
+                >
+                  <FaTrash />
+                </button>
+                <button
+                  onClick={() => setIsEditMangaDialogOpen(true)}
+                  className="border border-transparent text-white p-2 rounded hover:border-white transition duration-300"
+                  title="Edit Manga"
+                >
+                  <FaEdit size={20} />
+                </button>
+              </div>
+            )}
+
             {/* Titolo e autore */}
             <h1 className="text-3xl font-bold text-white mb-2">
               {manga.title}
@@ -201,7 +221,7 @@ export default function SingleManga() {
               {manga.genre.map((genre, index) => (
                 <span
                   key={index}
-                  className="inline-block bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2 mb-2"
+                  className="inline-block bg-button-bg rounded-full px-3 py-1 text-sm font-semibold text-gray-200 mr-2 mb-2"
                 >
                   {genre}
                 </span>
@@ -218,95 +238,74 @@ export default function SingleManga() {
         transition={{ duration: 0.5, delay: 0.4 }}
         className="mt-8"
       >
-        <h2 className="text-2xl font-bold text-white mb-4">Characters</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-white">Characters</h2>
+          {isOwner && (
+            <button
+              onClick={() => setIsAddCharacterDialogOpen(true)}
+              className=" text-white px-4 py-2 rounded-lg border border-transparent hover:border-white transition duration-300 flex items-center"
+            >
+              <FaUserPlus className="mr-2 w-10" /> Add Character
+            </button>
+          )}
+        </div>
         <InfiniteCharacterScroll characters={manga.characters} />
       </motion.div>
-      
-      {/* Reading Progress section */}
       {/* Reading Progress section */}
       {(isCurrentUser || (manga.isDefault && isInUserCollection)) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8 bg-gray-700 rounded-lg p-6"
+          className="mt-8 rounded-lg p-6"
         >
           <h2 className="text-2xl font-bold text-white mb-4">
             Reading Progress
           </h2>
           <ProgressSelector
-            label="Chapters Read"
-            current={userProgress.currentChapter}
-            max={manga.chapters}
-            onChange={(value) => handleProgressChange("currentChapter", value)}
-          />
-          <ProgressSelector
-            label="Volumes Read"
-            current={userProgress.currentVolume}
-            max={manga.volumes}
-            onChange={(value) => handleProgressChange("currentVolume", value)}
+            current={{
+              chapters: userProgress.currentChapter,
+              volumes: userProgress.currentVolume,
+            }}
+            max={{
+              chapters: manga.chapters,
+              volumes: manga.volumes,
+            }}
+            onChange={(type, value) => handleProgressChange(type, value)}
           />
         </motion.div>
       )}
 
-      {isOwner && (
-        <>
-          {isEditing ? (
-            <UpdateMangaForm
-              manga={manga}
-              onUpdate={handleMangaUpdate}
-              onCancel={() => setIsEditing(false)}
-            />
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
-            >
-              Edit Manga
-            </button>
-          )}
+      {/* Dialog per aggiungere un personaggio */}
+      <AddCharacterForm
+        mangaId={manga._id}
+        isOpen={isAddCharacterDialogOpen}
+        onClose={() => setIsAddCharacterDialogOpen(false)}
+        onCharacterAdded={() => {
+          handleCharacterAdded();
+          setIsAddCharacterDialogOpen(false);
+        }}
+      />
 
-          <DeleteMangaButton
-            userId={userId}
-            mangaId={manga._id}
-            onDelete={handleMangaDelete}
-          />
+      {/* Dialog per modificare il manga */}
+      <UpdateMangaForm
+        manga={manga}
+        isOpen={isEditMangaDialogOpen}
+        onClose={() => setIsEditMangaDialogOpen(false)}
+        onUpdate={(updatedManga) => {
+          handleMangaUpdate(updatedManga);
+          setIsEditMangaDialogOpen(false);
+        }}
+      />
 
-          <AddCharacterForm
-            mangaId={manga._id}
-            onCharacterAdded={handleCharacterAdded}
-          />
-        </>
-      )}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-        className="mt-8"
-      >
-        <h2 className="text-2xl font-bold text-white mb-4">Characters</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {manga.characters.map((character, index) => (
-            <motion.div
-              key={index}
-              whileHover={{ scale: 1.05 }}
-              className="bg-gray-700 rounded-lg overflow-hidden shadow-lg"
-            >
-              <img
-                src={character.image}
-                alt={character.name}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-white">
-                  {character.name}
-                </h3>
-                <p className="text-sm text-gray-400">{character.description}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+      <DeleteMangaButton
+        userId={userId}
+        mangaId={manga._id}
+        isDefault={manga.isDefault}
+        onDelete={handleMangaDelete}
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+      />
     </div>
   );
 }

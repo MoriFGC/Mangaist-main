@@ -9,6 +9,7 @@ import SingleManga from './pages/SingleManga';
 import SinglePanel from './pages/SinglePanel';
 import AllUsers from './pages/AllUsers';
 import Library from './pages/Library';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/panel/:id" element={<SinglePanel />} />
             <Route path="/users" element={<AllUsers />} />
             <Route path="/library" element={<Library />} />
+            <Route path="/*" element={<NotFound />} />
           </Routes>
         )}
       </Nav>

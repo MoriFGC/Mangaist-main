@@ -196,7 +196,7 @@ const Home = () => {
           className={`flex-1 py-4 flex justify-center items-center ${
             activeTab === "global"
               ? "border-b-2 border-white text-white"
-              : "text-gray-400 hover:text-blue-500"
+              : "text-gray-400 hover:text-white"
           }`}
           onClick={() => handleTabChange("global")}
         >
@@ -206,7 +206,7 @@ const Home = () => {
           className={`flex-1 py-4 flex justify-center items-center ${
             activeTab === "followed"
               ? "border-b-2 border-white text-white"
-              : "text-gray-400 hover:text-blue-500"
+              : "text-gray-400 hover:text-white"
           }`}
           onClick={() => handleTabChange("followed")}
         >

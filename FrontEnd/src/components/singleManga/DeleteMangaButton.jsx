@@ -1,61 +1,51 @@
 import React, { useState } from 'react';
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { removeMangaFromUserCatalog, deleteManga } from '../../services/api';
 
-const DeleteMangaButton = ({ userId, mangaId, isDefault, onDelete }) => {
-  const [isConfirming, setIsConfirming] = useState(false);
+const DeleteMangaButton = ({ userId, mangaId, isDefault, onDelete, isOpen, onClose }) => {
   const [error, setError] = useState(null);
 
   const handleDelete = async () => {
     try {
       if (isDefault) {
-        // Se è un manga predefinito, rimuovilo solo dal catalogo dell'utente
         await removeMangaFromUserCatalog(userId, mangaId);
       } else {
-        // Se è un manga personale, eliminalo globalmente
         const response = await deleteManga(mangaId);
-        console.log(response.data); // Questo mostrerà il numero di utenti aggiornati
+        console.log(response.data);
       }
       onDelete();
+      onClose();
     } catch (error) {
       console.error('Error removing manga:', error);
-      if (error.response) {
-        setError(`Failed to remove manga: ${error.response.data.message}`);
-      } else {
-        setError('Failed to remove manga. Please try again.');
-      }
+      setError(error.response?.data?.message || 'Failed to remove manga. Please try again.');
     }
   };
 
   return (
-    <div className="mt-6">
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      {!isConfirming ? (
-        <button
-          onClick={() => setIsConfirming(true)}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
-        >
-          Remove from My Catalog
-        </button>
-      ) : (
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <p className="text-white mb-4">Are you sure you want to remove this manga from your catalog?</p>
-          <div className="flex space-x-4">
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <DialogPanel className="w-full max-w-sm rounded-lg bg-black p-6 text-white border border-white/20">
+          <DialogTitle className="text-lg font-medium mb-4">Confirm Deletion</DialogTitle>
+          <p className="mb-4">Are you sure you want to remove this manga from your catalog?</p>
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+          <div className="flex justify-end space-x-4">
             <button
-              onClick={handleDelete}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
-            >
-              Confirm Remove
-            </button>
-            <button
-              onClick={() => setIsConfirming(false)}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition duration-300"
+              onClick={onClose}
+              className="px-4 py-2 bg-button-bg rounded hover:bg-gray-700 transition duration-300"
             >
               Cancel
             </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 rounded hover:bg-red-700 transition duration-300"
+            >
+              Delete
+            </button>
           </div>
-        </div>
-      )}
-    </div>
+        </DialogPanel>
+      </div>
+    </Dialog>
   );
 };
 
