@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { motion } from 'framer-motion';
 import { addFavoritePanel } from '../../services/api';
+import { TiPlus } from "react-icons/ti";
 
 const CreatePanelDialog = ({ isOpen, closeModal, onPanelCreation, userManga }) => {
   // Stato per i dati del pannello
@@ -75,31 +76,31 @@ const CreatePanelDialog = ({ isOpen, closeModal, onPanelCreation, userManga }) =
 console.log(userManga);
   return (
     <Dialog open={isOpen} onClose={closeModal} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="mx-auto max-w-md rounded bg-white p-6 overflow-y-auto max-h-[90vh]">
-          <DialogTitle className="text-lg font-medium leading-6 text-gray-900 mb-4">Add New Panel</DialogTitle>
+        <DialogPanel className="mx-auto max-w-md rounded bg-black p-6 overflow-y-auto max-h-[90vh]">
+          <DialogTitle className="text-lg font-medium leading-6 text-white mb-4">Add New Panel</DialogTitle>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+              <label htmlFor="description" className="block text-sm font-medium text-white">Description</label>
               <textarea
                 name="description"
                 id="description"
                 rows="3"
                 value={panelData.description}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 ps-2 block w-full rounded-md border-gray-300 shadow-sm bg-button-bg text-white"
               ></textarea>
             </div>
             <div>
-              <label htmlFor="manga" className="block text-sm font-medium text-gray-700">Manga</label>
+              <label htmlFor="manga" className="block text-sm font-medium text-white">Manga</label>
               <select
                 name="manga"
                 id="manga"
                 required
                 value={panelData.manga}
                 onChange={handleInputChange}
-                className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 ps-2 block w-full  rounded-md border-gray-300 shadow-sm bg-button-bg text-white"
               >
                 <option value="">Select a manga</option>
                 {userManga.map((manga) => (
@@ -108,7 +109,7 @@ console.log(userManga);
               </select>
             </div>
             <div>
-              <label htmlFor="chapterNumber" className="block text-sm font-medium text-gray-700">Chapter Number</label>
+              <label htmlFor="chapterNumber" className="block text-sm font-medium text-white">Chapter Number</label>
               <input
                 type="number"
                 name="chapterNumber"
@@ -116,11 +117,11 @@ console.log(userManga);
                 min="1"
                 value={panelData.chapterNumber}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 ps-2 block w-full rounded-md border-gray-300 shadow-sm bg-button-bg text-white"
               />
             </div>
             <div>
-              <label htmlFor="volumeNumber" className="block text-sm font-medium text-gray-700">Volume Number</label>
+              <label htmlFor="volumeNumber" className="block text-sm font-medium text-white">Volume Number</label>
               <input
                 type="number"
                 name="volumeNumber"
@@ -128,11 +129,11 @@ console.log(userManga);
                 min="1"
                 value={panelData.volumeNumber}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 ps-2 block w-full rounded-md border-gray-300 shadow-sm bg-button-bg text-white"
               />
             </div>
             <div>
-              <label htmlFor="panelImage" className="block text-sm font-medium text-gray-700">Panel Image</label>
+              <label htmlFor="panelImage" className="block text-sm font-medium text-white">Panel Image</label>
               <input
                 type="file"
                 name="panelImage"
@@ -143,23 +144,22 @@ console.log(userManga);
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-full file:border-0
                   file:text-sm file:font-semibold
-                  file:bg-violet-50 file:text-violet-700
-                  hover:file:bg-violet-100"
+                  file:text-black"
               />
             </div>
             <div className="mt-4 flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={closeModal}
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="inline-flex justify-center rounded-md border border-transparent hover:border-white px-4 py-2 text-sm font-medium text-white"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="inline-flex justify-center items-center gap-1 rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-black hover:text-black hover:border-black hover:bg-emerald-500"
               >
-                Add Panel
+                <TiPlus />Add Panel
               </button>
             </div>
           </form>

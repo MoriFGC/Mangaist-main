@@ -59,7 +59,7 @@ const BottomNav = ({ userData, userManga, onNewContentCreated }) => {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleCreateClick}
-            className="bg-blue-500 rounded-full p-3 text-2xl shadow-lg"
+            className="bg-white text-black rounded-full p-3 text-2xl shadow-lg"
           >
             <AiOutlinePlus />
           </motion.button>
@@ -75,7 +75,7 @@ const BottomNav = ({ userData, userManga, onNewContentCreated }) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleCreateClick}
-          className="bg-blue-500 text-white rounded-full p-4 text-3xl shadow-lg"
+          className="bg-white text-black border border-transparent hover:bg-black hover:text-white hover:border-white  rounded-full p-4 text-3xl shadow-lg"
         >
           <AiOutlinePlus />
         </motion.button>
@@ -95,21 +95,20 @@ const BottomNav = ({ userData, userManga, onNewContentCreated }) => {
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
-              className="bg-white rounded-lg p-6 w-64"
+              className="bg-black text-white border border-white/20 rounded-lg p-6 w-64"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-bold mb-4">Cosa vuoi creare?</h2>
               <button
                 onClick={openCreateMangaDialog}
-                className="w-full bg-blue-500 text-white py-2 rounded mb-2"
+                className="w-full border border-white bg-black text-white hover:border-blue-500  hover:text-blue-500 font-semibold py-2 rounded mb-2"
               >
-                Nuovo Manga
+                New Manga
               </button>
               <button
                 onClick={openCreatePanelDialog}
-                className="w-full bg-green-500 text-white py-2 rounded"
+                className="w-full border border-white bg-black text-white hover:border-emerald-500 hover:text-emerald-500 font-semibold py-2 rounded"
               >
-                Nuovo Pannello
+                New Panel
               </button>
             </motion.div>
           </motion.div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { motion } from 'framer-motion';
 import { addMangaToCatalog } from '../../services/api';
+import { TiPlus } from "react-icons/ti";
 
 const CreateMangaDialog = ({ isOpen, closeModal, onMangaCreation }) => {
   // Stato per i dati del manga
@@ -86,149 +87,171 @@ const CreateMangaDialog = ({ isOpen, closeModal, onMangaCreation }) => {
 
   return (
     <Dialog open={isOpen} onClose={closeModal} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="mx-auto max-w-md rounded bg-white p-6 overflow-y-auto max-h-[90vh]">
-          <Dialog.Title className="text-lg font-medium leading-6 text-gray-900 mb-4">Add New Manga</Dialog.Title>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                type="text"
-                name="title"
-                id="title"
-                required
-                value={mangaData.title}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="author" className="block text-sm font-medium text-gray-700">Author</label>
-              <input
-                type="text"
-                name="author"
-                id="author"
-                required
-                value={mangaData.author}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                name="description"
-                id="description"
-                rows="3"
-                value={mangaData.description}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              ></textarea>
-            </div>
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-              <select
-                name="status"
-                id="status"
-                required
-                value={mangaData.status}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option value="ongoing">Ongoing</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="volumes" className="block text-sm font-medium text-gray-700">Volumes</label>
-              <input
-                type="number"
-                name="volumes"
-                id="volumes"
-                min="0"
-                value={mangaData.volumes}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="chapters" className="block text-sm font-medium text-gray-700">Chapters</label>
-              <input
-                type="number"
-                name="chapters"
-                id="chapters"
-                min="0"
-                value={mangaData.chapters}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Genre</label>
-              <div className="mt-2 space-y-2">
-                {['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller'].map((genre) => (
-                  <div key={genre} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={genre}
-                      name="genre"
-                      value={genre}
-                      checked={mangaData.genre.includes(genre)}
-                      onChange={handleInputChange}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label htmlFor={genre} className="ml-2 block text-sm text-gray-900">
-                      {genre}
-                    </label>
-                  </div>
-                ))}
+        {/* Aumentiamo la larghezza massima del pannello per desktop */}
+        <Dialog.Panel className="w-full max-w-[95%] md:max-w-4xl rounded bg-black p-6 overflow-y-auto max-h-[90vh] border border-white/30">
+          <Dialog.Title className="text-2xl font-bold leading-6 text-white mb-6">Add New Manga</Dialog.Title>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Utilizziamo un layout a griglia per organizzare i campi su desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Titolo */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-white mb-1">Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  id="title"
+                  required
+                  value={mangaData.title}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Autore */}
+              <div>
+                <label htmlFor="author" className="block text-sm font-medium text-white mb-1">Author</label>
+                <input
+                  type="text"
+                  name="author"
+                  id="author"
+                  required
+                  value={mangaData.author}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Descrizione - occupa due colonne su desktop */}
+              <div className="md:col-span-2">
+                <label htmlFor="description" className="block text-sm font-medium text-white mb-1">Description</label>
+                <textarea
+                  name="description"
+                  id="description"
+                  rows="3"
+                  value={mangaData.description}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg focus:border-indigo-500 focus:ring-indigo-500"
+                ></textarea>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label htmlFor="status" className="block text-sm font-medium text-white mb-1">Status</label>
+                <select
+                  name="status"
+                  id="status"
+                  required
+                  value={mangaData.status}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="ongoing">Ongoing</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              {/* Demographics */}
+              <div>
+                <label htmlFor="demographics" className="block text-sm font-medium text-white mb-1">Demographics</label>
+                <select
+                  name="demographics"
+                  id="demographics"
+                  value={mangaData.demographics}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="">Select demographics</option>
+                  <option value="Shonen">Shonen</option>
+                  <option value="Seinen">Seinen</option>
+                  <option value="Shoujo">Shoujo</option>
+                  <option value="Josei">Josei</option>
+                </select>
+              </div>
+
+              {/* Volumes */}
+              <div>
+                <label htmlFor="volumes" className="block text-sm font-medium text-white mb-1">Volumes</label>
+                <input
+                  type="number"
+                  name="volumes"
+                  id="volumes"
+                  min="0"
+                  value={mangaData.volumes}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Chapters */}
+              <div>
+                <label htmlFor="chapters" className="block text-sm font-medium text-white mb-1">Chapters</label>
+                <input
+                  type="number"
+                  name="chapters"
+                  id="chapters"
+                  min="0"
+                  value={mangaData.chapters}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Cover Image */}
+              <div className="md:col-span-2">
+                <label htmlFor="coverImage" className="block text-sm font-medium text-white mb-1">Cover Image</label>
+                <input
+                  type="file"
+                  name="coverImage"
+                  id="coverImage"
+                  onChange={handleInputChange}
+                  className="w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-semibold
+                    file:text-black"
+                />
+              </div>
+
+              {/* Genre - occupa due colonne su desktop */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-white mb-1">Genre</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller'].map((genre) => (
+                    <div key={genre} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={genre}
+                        name="genre"
+                        value={genre}
+                        checked={mangaData.genre.includes(genre)}
+                        onChange={handleInputChange}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <label htmlFor={genre} className="ml-2 text-sm text-white">
+                        {genre}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div>
-              <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">Cover Image</label>
-              <input
-                type="file"
-                name="coverImage"
-                id="coverImage"
-                onChange={handleInputChange}
-                className="mt-1 block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-violet-50 file:text-violet-700
-                  hover:file:bg-violet-100"
-              />
-            </div>
-            <div>
-              <label htmlFor="demographics" className="block text-sm font-medium text-gray-700">Demographics</label>
-              <select
-                name="demographics"
-                id="demographics"
-                value={mangaData.demographics}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option value="">Select demographics</option>
-                <option value="Shonen">Shonen</option>
-                <option value="Seinen">Seinen</option>
-                <option value="Shoujo">Shoujo</option>
-                <option value="Josei">Josei</option>
-              </select>
-            </div>
-            <div className="mt-4 flex justify-end space-x-2">
+
+            {/* Pulsanti di azione */}
+            <div className="mt-6 flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={closeModal}
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="px-4 py-2 rounded-md border border-transparent hover:border-white  text-sm font-medium text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className=" flex items-center px-4 py-2 rounded-md border border-transparent bg-white text-sm font-semibold text-black hover:bg-black hover:text-white hover:border-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
-                Add Manga
+                <TiPlus /> Add Manga
               </button>
             </div>
           </form>
