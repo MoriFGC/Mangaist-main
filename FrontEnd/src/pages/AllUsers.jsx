@@ -54,7 +54,7 @@ export default function AllUsers() {
       }
     });
   };
-
+console.log(users);
   // Utilizziamo useMemo per memorizzare gli utenti filtrati e ordinati
   const filteredAndSortedUsers = useMemo(() => {
     return sortUsers(users, sortCriteria).filter(user =>
@@ -121,7 +121,7 @@ export default function AllUsers() {
                 <div className="absolute inset-0 bg-black bg-opacity-70 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-white">
                   <div className="flex items-center mb-2">
                     <FaUser className="mr-2" />
-                    <span>{user.followers?.length || 0}</span>
+                    <span>{user.followers || 0}</span>
                   </div>
                   <div className="flex items-center mb-2">
                     <FaBook className="mr-2" />

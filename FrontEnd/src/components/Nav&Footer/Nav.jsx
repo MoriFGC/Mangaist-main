@@ -29,6 +29,9 @@ export default function Nav({ children }) {
             const response = await getUserById(storedUserData.id);
             setUserData(response.data);
 
+          // Assicurati che l'userId sia salvato nel localStorage
+          localStorage.setItem("userId", storedUserData.id)
+
             // Fetch dei manga dell'utente
             const mangaResponse = await getUserManga(storedUserData.id);
             setUserManga(mangaResponse.data.filter((item) => item.manga !== null));

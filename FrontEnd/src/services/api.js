@@ -175,8 +175,16 @@ export const getConversationMessages = (userId) => api.get(`/messages/${userId}`
 // In api.js
 export const followUser = (userId) => api.post(`/users/${userId}/follow`);
 export const unfollowUser = (userId) => api.post(`/users/${userId}/unfollow`);
-
-
+// Funzione per controllare lo stato di follow
+export const checkFollowStatus = async (userId) => {
+  try {
+    const response = await api.get(`/users/${userId}/followStatus`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel controllo dello stato di follow:', error);
+    throw error;
+  }
+};
 
 export const getAllPanels = (limit = 10, skip = 0) => 
   api.get(`/users/allPanels?limit=${limit}&skip=${skip}`);

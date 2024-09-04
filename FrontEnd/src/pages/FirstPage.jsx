@@ -24,6 +24,9 @@ const FirstPage = () => {
 
           // Salva i dati dell'utente nel localStorage
           localStorage.setItem("userData", JSON.stringify(userData));
+
+          // Salva l'ID dell'utente separatamente
+          localStorage.setItem("userId", userData.id);
           console.log(userData);
           
           // Controlla se il profilo è completo

@@ -86,10 +86,10 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-black p-6 text-left align-middle shadow-xl transition-all">
                 <DialogTitle
                   as="h3"
-                  className="text-lg font-medium leading-6 text-gray-900"
+                  className="text-lg font-medium leading-6 text-white"
                 >
                   Update Profile
                 </DialogTitle>
@@ -97,7 +97,7 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                   <div className="mb-4">
                     <label
                       htmlFor="name"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-white"
                     >
                       Name
                     </label>
@@ -107,13 +107,13 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                       id="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg ps-2"
                     />
                   </div>
                   <div className="mb-4">
                     <label
                       htmlFor="cognome"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-white"
                     >
                       Surname
                     </label>
@@ -123,13 +123,13 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                       id="cognome"
                       value={formData.cognome}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg ps-2"
                     />
                   </div>
                   <div className="mb-4">
                     <label
                       htmlFor="nickname"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-white"
                     >
                       Nickname
                     </label>
@@ -139,13 +139,13 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                       id="nickname"
                       value={formData.nickname}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg ps-2"
                     />
                   </div>
                   <div className="mb-4">
                     <label
                       htmlFor="description"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-white"
                     >
                       Description
                     </label>
@@ -155,14 +155,14 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                       rows="3"
                       value={formData.description}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-white bg-button-bg ps-2"
                       placeholder="Write a brief description about yourself..."
                     />
                   </div>
                   <div className="mb-4">
                     <label
                       htmlFor="profileImage"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-white"
                     >
                       Profile Image
                     </label>
@@ -175,8 +175,7 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-violet-50 file:text-violet-700
-                        hover:file:bg-violet-100"
+                      file:text-black"
                     />
                   </div>
                   <div className="mb-4 flex items-center">
@@ -190,22 +189,22 @@ const UpdateProfileDialog = ({ isOpen, closeModal, user, onProfileUpdate }) => {
                     />
                     <label
                       htmlFor="profilePublic"
-                      className="ml-2 block text-sm text-gray-900"
+                      className="ml-2 block text-sm text-white"
                     >
                       Make profile public
                     </label>
                   </div>
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-4 flex gap-2 justify-end">
                     <button
                       type="button"
-                      className="mr-2 inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                      className="inline-flex justify-center rounded-md border border-transparent hover:border-white px-4 py-2 text-sm font-medium text-white"
                       onClick={closeModal}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      className="inline-flex justify-center items-center gap-1 rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-black hover:text-black hover:border-black hover:bg-emerald-500"
                     >
                       Update
                     </button>

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 export default function ResponsiveProfile({
   profile,
@@ -15,13 +16,13 @@ export default function ResponsiveProfile({
       return {
         text: "Unfollow",
         className:
-          "px-4 py-1 bg-gray-500 rounded-md text-sm font-semibold text-white hover:bg-gray-600 transition-colors duration-300 w-full",
+          "px-4 py-1 mt-3 bg-black rounded-md text-sm font-semibold border border-white hover:border-transparent text-white hover:bg-white hover:text-black transition-colors duration-300 w-full lg:w-[150px]",
       };
     } else {
       return {
         text: "Follow",
         className:
-          "px-4 py-1 bg-blue-500 rounded-md text-sm font-semibold text-white hover:bg-blue-600 transition-colors duration-300 w-full",
+          "px-4 py-1 mt-3 w-full lg:w-[150px] bg-white border border-transparent rounded-md text-sm font-semibold text-black hover:bg-black hover:text-white hover:border-white transition-colors duration-300",
       };
     }
   };
@@ -38,7 +39,7 @@ export default function ResponsiveProfile({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          {followButtonProps.text}
+          {isFollowing ? "Unfollow" : "Follow"}
         </motion.button>
       );
     }
@@ -89,26 +90,27 @@ export default function ResponsiveProfile({
           )}
 
           {/* Pulsante Edit Profile/Follow - posizionamento diverso per mobile e desktop */}
-          <div className="absolute -bottom-7 mt-0">
+          <div className="">
             {isProfileOwner ? (
               <motion.button
                 onClick={() => setIsUpdateDialogOpen(true)}
-                className="px-4 py-1 bg-transparent border border-gray-400 rounded-md text-sm font-semibold text-white hover:border-white transition-colors duration-300"
-                whileHover={{ scale: 1.05 }}
+                className="absolute top-0 right-0 mt-0 border border-transparent text-white p-2 rounded hover:border-white transition duration-300"
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Edit Profile
+                <FaEdit size={20} />
               </motion.button>
             ) : (
-              renderFollowButton()
+              
+              renderFollowButton() 
             )}
           </div>
         </div>
       </div>
 
       {/* layout per mobile */}
-      <div className="md:hidden mb-8">
-        <div className="flex items-center mb-4">
+      <div className="md:hidden mb-8 relative">
+        <div className="flex items-center mb-4 ">
           {/* Immagine del profilo */}
           <motion.img
             src={profile.profileImage || profile.picture}
@@ -158,11 +160,11 @@ export default function ResponsiveProfile({
         {isProfileOwner ? (
           <motion.button
             onClick={() => setIsUpdateDialogOpen(true)}
-            className="w-full py-2 bg-gray-800 rounded-md text-sm font-semibold text-white hover:bg-gray-700 transition-colors duration-300"
+            className="absolute bottom-14 right-0 mt-0  text-white p-2 rounded transition duration-300"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Edit Profile
+            <FaEdit size={20}/>
           </motion.button>
         ) : (
           renderFollowButton()

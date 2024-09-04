@@ -96,7 +96,7 @@ router.get('/followedPanels', authMiddleware, async (req, res) => {
 router.get('/public', async (req, res) => {
   try {
     const users = await User.find()
-      .select('name nickname profileImage profilePublic manga favoritePanels')
+      .select('name nickname profileImage profilePublic manga favoritePanels followers')
       .lean();
     
     const usersWithCounts = users.map(user => ({
@@ -106,7 +106,8 @@ router.get('/public', async (req, res) => {
       profileImage: user.profileImage, // Aggiungi un'immagine predefinita se non è presente
       profilePublic: user.profilePublic,
       manga: user.profilePublic ? user.manga.length : null,
-      favoritePanels: user.profilePublic ? user.favoritePanels.length : null
+      favoritePanels: user.profilePublic ? user.favoritePanels.length : null,
+      followers: user.profilePublic ? user.followers.length : null // Aggiungiamo il conteggio dei follower
     }));
 
     res.json(usersWithCounts);
@@ -114,6 +115,7 @@ router.get('/public', async (req, res) => {
     res.status(500).json({message: error.message});
   }
 });
+
 // In usersRoutes.js
 router.get('/public/:userId', async (req, res) => {
   try {
@@ -678,60 +680,82 @@ router.post('/panels/:panelId/comment', authMiddleware, async (req, res) => {
 
 // FOLLOW
 
-// POST per seguire un utente
-router.post('/:id/follow', authMiddleware, async (req, res) => {
+// Aggiungi questa nuova rotta per controllare lo stato di follow
+router.get('/:id/followStatus', authMiddleware, async (req, res) => {
   try {
-    const userToFollow = await User.findById(req.params.id);
+    const userToCheck = await User.findById(req.params.id);
     const currentUser = await User.findById(req.user._id);
 
-    if (!userToFollow || !currentUser) {
+    if (!userToCheck || !currentUser) {
       return res.status(404).json({ message: 'Utente non trovato' });
     }
 
-    if (currentUser._id.toString() === userToFollow._id.toString()) {
-      return res.status(400).json({ message: 'Non puoi seguire te stesso' });
-    }
+    const isFollowing = currentUser.following.includes(userToCheck._id);
 
-    if (currentUser.following.includes(userToFollow._id)) {
-      return res.status(400).json({ message: 'Stai già seguendo questo utente' });
-    }
-
-    currentUser.following.push(userToFollow._id);
-    userToFollow.followers.push(currentUser._id);
-
-    await currentUser.save();
-    await userToFollow.save();
-
-    res.json({ message: 'Utente seguito con successo' });
+    res.json({ isFollowing });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// POST per smettere di seguire un utente
+// Follow user
+router.post('/:id/follow', authMiddleware, async (req, res) => {
+  try {
+    const userToFollow = await User.findById(req.params.id);
+    const currentUser = await User.findById(req.user._id); // Usa l'ID del database
+
+    if (!userToFollow || !currentUser) {
+      return res.status(404).json({ success: false, message: 'Utente non trovato' });
+    }
+
+    if (currentUser._id.toString() === userToFollow._id.toString()) {
+      return res.status(400).json({ success: false, message: 'Non puoi seguire te stesso' });
+    }
+
+    if (!currentUser.following.includes(userToFollow._id)) {
+      currentUser.following.push(userToFollow._id);
+      userToFollow.followers.push(currentUser._id);
+
+      await currentUser.save();
+      await userToFollow.save();
+
+      res.json({ success: true, message: 'Utente seguito con successo' });
+    } else {
+      res.status(400).json({ success: false, message: 'Stai già seguendo questo utente' });
+    }
+  } catch (error) {
+    console.error('Errore nel seguire l\'utente:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Unfollow user
 router.post('/:id/unfollow', authMiddleware, async (req, res) => {
   try {
     const userToUnfollow = await User.findById(req.params.id);
     const currentUser = await User.findById(req.user._id);
 
     if (!userToUnfollow || !currentUser) {
-      return res.status(404).json({ message: 'Utente non trovato' });
+      return res.status(404).json({ success: false, message: 'Utente non trovato' });
     }
 
-    if (!currentUser.following.includes(userToUnfollow._id)) {
-      return res.status(400).json({ message: 'Non stai seguendo questo utente' });
+    const followingIndex = currentUser.following.indexOf(userToUnfollow._id);
+    const followerIndex = userToUnfollow.followers.indexOf(currentUser._id);
+
+    if (followingIndex > -1 && followerIndex > -1) {
+      currentUser.following.splice(followingIndex, 1);
+      userToUnfollow.followers.splice(followerIndex, 1);
+
+      await currentUser.save();
+      await userToUnfollow.save();
+
+      res.json({ success: true, message: 'Hai smesso di seguire l\'utente con successo' });
+    } else {
+      res.status(400).json({ success: false, message: 'Non stai seguendo questo utente' });
     }
-
-    currentUser.following = currentUser.following.filter(id => id.toString() !== userToUnfollow._id.toString());
-    userToUnfollow.followers = userToUnfollow.followers.filter(id => id.toString() !== currentUser._id.toString());
-
-    await currentUser.save();
-    await userToUnfollow.save();
-
-    res.json({ message: 'Hai smesso di seguire l\'utente con successo' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Errore nello smettere di seguire l\'utente:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
-
 export default router;
