@@ -66,7 +66,7 @@ const Sidebar = ({ userData, navItems, socialItems }) => {
               <AnimatedSocialIcon
                 href={item.href}
                 icon={item.icon}
-                className="text-2xl hover:text-blue-500"
+                className="text-2xl hover:text-white"
               />
             </li>
           ))}
