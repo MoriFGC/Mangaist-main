@@ -51,21 +51,21 @@ const CompleteProfile = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center min-h-screen bg-gray-100"
+            className="flex flex-col items-center justify-center min-h-screen"
         >
             <motion.form 
                 onSubmit={handleSubmit}
-                className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+                className="border border-white/30 text-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
                 initial={{ y: -50 }}
                 animate={{ y: 0 }}
             >
                 <h2 className="text-2xl mb-4 font-bold text-center">Complete Your Profile</h2>
                 <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nickname">
+                    <label className="block text-white text-sm font-bold mb-2" htmlFor="nickname">
                         Nickname
                     </label>
                     <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className="shadow appearance-none border rounded w-full bg-black py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline"
                         id="nickname"
                         type="text"
                         placeholder="Nickname"
@@ -75,11 +75,11 @@ const CompleteProfile = () => {
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+                    <label className="block text-white text-sm font-bold mb-2" htmlFor="name">
                         Name
                     </label>
                     <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className="shadow appearance-none border rounded w-full bg-black py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline"
                         id="name"
                         type="text"
                         placeholder="Name"
@@ -89,11 +89,11 @@ const CompleteProfile = () => {
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cognome">
+                    <label className="block text-white text-sm font-bold mb-2" htmlFor="cognome">
                         Surname
                     </label>
                     <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className="shadow appearance-none border rounded w-full bg-black py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline"
                         id="cognome"
                         type="text"
                         placeholder="Surname"
@@ -116,7 +116,7 @@ const CompleteProfile = () => {
                 </div>
                 <div className="flex items-center justify-between">
                     <button
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        className="bg-white hover:bg-black text-black border border-transparent hover:border-white hover:text-white active:bg-white/50 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300"
                         type="submit"
                     >
                         Complete Profile
