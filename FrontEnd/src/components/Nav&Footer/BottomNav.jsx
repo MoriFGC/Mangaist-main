@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Aggiungiamo useNavigate
+import { Link, useLocation, useNavigate } from "react-router-dom"; // Aggiungiamo useNavigate
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlinePlus, AiOutlineHome, AiOutlineUser } from "react-icons/ai";
 import CreateMangaDialog from "../profile/CreateMangaDialog";
 import CreatePanelDialog from "../profile/CreatePanelDialog";
 
 const BottomNav = ({ userData, userManga, onNewContentCreated }) => {
+  const location = useLocation();
+  const isFirstPage = location.pathname === "/";
 
   const navigate = useNavigate(); // Hook per la navigazione
 
@@ -42,7 +44,6 @@ const BottomNav = ({ userData, userManga, onNewContentCreated }) => {
     navigate(`/manga/${newManga._id}`); // Navighiamo alla pagina del nuovo manga
   };
 
-
   const handlePanelCreation = (newPanel) => {
     setIsCreatePanelDialogOpen(false);
     onNewContentCreated(); // Chiamiamo la funzione di callback
@@ -51,35 +52,39 @@ const BottomNav = ({ userData, userManga, onNewContentCreated }) => {
   return (
     <>
       {/* Barra di navigazione mobile */}
-      <nav className="md:hidden fixed -bottom-1 left-0 right-0 bg-black bg-opacity-80 backdrop-filter backdrop-blur-lg text-white p-4 border-t border-gray-700">
-        <div className="flex justify-between items-center max-w-screen-sm mx-auto">
-          <Link to="/home" className="text-2xl">
-            <AiOutlineHome />
-          </Link>
+      {!isFirstPage && (
+        <nav className="md:hidden fixed -bottom-1 left-0 right-0 bg-black bg-opacity-80 backdrop-filter backdrop-blur-lg text-white p-4 border-t border-gray-700">
+          <div className="flex justify-between items-center max-w-screen-sm mx-auto">
+            <Link to="/home" className="text-2xl">
+              <AiOutlineHome />
+            </Link>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleCreateClick}
+              className="bg-white text-black rounded-full p-3 text-2xl shadow-lg"
+            >
+              <AiOutlinePlus />
+            </motion.button>
+            <Link to={`/profile/${userData?._id}`} className="text-2xl">
+              <AiOutlineUser />
+            </Link>
+          </div>
+        </nav>
+      )}
+
+      {/* Pulsante '+' per desktop */}
+      {!isFirstPage && (
+        <div className="hidden md:block fixed bottom-8 right-8">
           <motion.button
+            whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleCreateClick}
-            className="bg-white text-black rounded-full p-3 text-2xl shadow-lg"
+            className="bg-white text-black border border-transparent hover:bg-black hover:text-white hover:border-white  rounded-full p-4 text-3xl shadow-lg"
           >
             <AiOutlinePlus />
           </motion.button>
-          <Link to={`/profile/${userData?._id}`} className="text-2xl">
-            <AiOutlineUser />
-          </Link>
         </div>
-      </nav>
-
-      {/* Pulsante '+' per desktop */}
-      <div className="hidden md:block fixed bottom-8 right-8">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleCreateClick}
-          className="bg-white text-black border border-transparent hover:bg-black hover:text-white hover:border-white  rounded-full p-4 text-3xl shadow-lg"
-        >
-          <AiOutlinePlus />
-        </motion.button>
-      </div>
+      )}
 
       {/* Dialogo di scelta per la creazione */}
       <AnimatePresence>

@@ -1,81 +1,138 @@
 // Importazioni necessarie
-import { useAuth0 } from "@auth0/auth0-react"  // Hook per l'autenticazione Auth0
-import { useEffect } from "react";  // Hook per effetti collaterali
-import { useNavigate } from 'react-router-dom';  // Hook per la navigazione
-import { motion } from "framer-motion";  // Libreria per le animazioni
-import { auth0Callback } from '../services/api';  // Funzione per gestire il callback di Auth0
+import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { auth0Callback } from "../services/api";
+import Abdul from "../assets/Abdul.jpg";
+import LoginButton from "../components/Nav&Footer/LoginButton";
+import useTypingEffect from "../hooks/useTypingEffect"; // Importiamo il nostro custom hook
 
 const FirstPage = () => {
-  // Hook per la navigazione programmatica
   const navigate = useNavigate();
-  // Ottiene lo stato di autenticazione e una funzione per ottenere i claims del token
   const { isAuthenticated, getIdTokenClaims, isLoading } = useAuth0();
+
+  const [startIntroTyping, setStartIntroTyping] = useState(false);
+
+  const { displayedText: titleText, isComplete: isTitleComplete } =
+    useTypingEffect("Welcome to Mangaist", 100);
+
+  const { displayedText: introText, isComplete: isIntroComplete } = useTypingEffect(
+    "Hi, I'm Abd Elrahman Mohamed and this is my Capstone Project.",
+    50,
+    startIntroTyping
+  );
+
+  const projectDetails = `
+  I created Mangaist for manga enthusiasts like myself who often lose track of their reading progress. This site helps you:
+
+  • Keep track of what you're currently reading
+  • Manage your to-read list
+  • Record completed manga
+  • Save your favorite manga panels
+
+  Key features:
+  • Home: Explore a feed of manga panels shared by the community, similar to Instagram
+  • Library: Discover new manga and add them to your collection
+  • Social: Find and connect with other manga fans
+  • Profile: Manage your reading list, favorite panels, and customize your profile
+
+  The '+' button at the bottom right allows you to easily add new manga or panels to your collection.
+
+  Start your manga journey with Mangaist today and never lose track of your reading again!
+  `;
+  
+  useEffect(() => {
+    if (isTitleComplete) {
+      setStartIntroTyping(true);
+    }
+  }, [isTitleComplete]);
 
   // Effetto per controllare se il profilo dell'utente è completo
   useEffect(() => {
     async function checkProfileCompletion() {
-      // Esegui solo se l'utente è autenticato
       if (isAuthenticated && !isLoading) {
         try {
-          // Ottiene i claims del token ID
           const claims = await getIdTokenClaims();
-          // Invia il token ID al backend per la verifica e ottiene i dati dell'utente
           const userData = await auth0Callback({ id_token: claims.__raw });
-
-          // Salva i dati dell'utente nel localStorage
           localStorage.setItem("userData", JSON.stringify(userData));
-
-          // Salva l'ID dell'utente separatamente
           localStorage.setItem("userId", userData.id);
-          console.log(userData);
-          
-          // Controlla se il profilo è completo
+
           if (!userData.profileCompleted) {
-            // Se il profilo non è completo, reindirizza l'utente alla pagina di completamento
-            navigate('/complete-profile');
+            navigate("/complete-profile");
           } else {
-            // Se il profilo è completo, reindirizza alla home o a un'altra pagina appropriata
-            window.location.href = '/home';
+            window.location.href = "/home";
           }
         } catch (error) {
-          console.error('Error checking profile completion:', error);
+          console.error("Error checking profile completion:", error);
         }
       }
     }
-    // Esegui la funzione di controllo
     checkProfileCompletion();
-  }, [isAuthenticated, getIdTokenClaims, navigate, isLoading]);  // Dipendenze dell'effetto
+  }, [isAuthenticated, getIdTokenClaims, navigate, isLoading]);
 
-  // Renderizza il contenuto della pagina
   return (
-    <motion.div 
-      // Animazioni di Framer Motion per l'entrata e l'uscita del componente
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white"
-    >
-      <h1 className="text-4xl font-bold mb-4">Welcome to MangaApp</h1>
-      <p className="text-xl mb-8">Your personal manga library and community</p>
-      {/* Mostra il pulsante "Get Started" solo se l'utente non è autenticato */}
-      {!isAuthenticated && (
-        <button 
-          onClick={() => navigate('/login')} 
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Get Started
-        </button>
-      )}
-    </motion.div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 bg-black">
+      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-between mb-8">
+        <div className="w-full md:w-1/2 flex flex-col justify-center mb-8 md:mb-0 md:pr-8">
+          <motion.h1
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {titleText}
+            {!isTitleComplete && (
+              <span className="inline-block w-0.5 h-6 md:h-8 bg-white ml-1 animate-blink"></span>
+            )}
+          </motion.h1>
+          {isTitleComplete && (
+            <motion.p
+              className="text-lg md:text-xl text-white mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              {introText}
+              {!isIntroComplete && (
+                <span className="inline-block w-0.5 h-5 md:h-6 bg-white ml-1 animate-blink"></span>
+              )}
+            </motion.p>
+          )}
+          {!isAuthenticated && (
+            <motion.div
+              className="flex justify-center md:justify-start mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2, duration: 0.5 }}
+            >
+              <LoginButton />
+            </motion.div>
+          )}
+        </div>
+
+        <div className="w-full md:w-1/2 flex items-center justify-center">
+          <motion.img
+            src={Abdul}
+            alt="Abd elrahman Mohamed"
+            className="max-w-full max-h-[50vh] object-contain rounded-lg"
+            initial={{ opacity: 0, x: 1000 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, duration: 1 }}
+          />
+        </div>
+      </div>
+
+      <motion.div
+        className="w-full max-w-4xl text-sm md:text-base text-gray-300 mt-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 2.5, duration: 0.5 }}
+      >
+        <p className="whitespace-pre-line">{projectDetails}</p>
+      </motion.div>
+    </div>
   );
 };
 
 export default FirstPage;
-
-// Note aggiuntive:
-// - Questo componente serve come pagina iniziale dell'applicazione.
-// - Controlla lo stato di autenticazione dell'utente e reindirizza di conseguenza.
-// - Se l'utente è autenticato ma il profilo non è completo, viene reindirizzato alla pagina di completamento del profilo.
-// - Se l'utente è autenticato e il profilo è completo, viene reindirizzato alla home page.
-// - Se l'utente non è autenticato, viene mostrato un pulsante per iniziare il processo di login.
-// - La sincronizzazione dei dati dell'utente con il backend dovrebbe essere gestita in un componente di livello superiore o in un custom hook.

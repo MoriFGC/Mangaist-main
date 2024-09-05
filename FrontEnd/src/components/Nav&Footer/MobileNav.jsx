@@ -12,6 +12,7 @@ const MobileNav = ({ userData, navItems, socialItems }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const currentLocation = useLocation();
   const isProfilePage = currentLocation.pathname.includes('/profile');
+  const isFirstPage = currentLocation.pathname === '/';
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -26,7 +27,7 @@ const MobileNav = ({ userData, navItems, socialItems }) => {
             <Link to="/home">
               <img src={logo} alt="logo" className="w-20" />
             </Link>
-          ) : (
+          ) : !isFirstPage && (
             // Altrimenti, mostra l'immagine del profilo o il pulsante di login
             userData ? (
               <img

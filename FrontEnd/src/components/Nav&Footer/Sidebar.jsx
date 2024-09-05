@@ -10,11 +10,12 @@ import AnimatedSocialIcon from "./AnimatedSocialIcon";
 const Sidebar = ({ userData, navItems, socialItems }) => {
   const currentLocation = useLocation();
   const isProfilePage = currentLocation.pathname.includes("/profile");
+  const isFirstPage = currentLocation.pathname === '/';
 
   return (
     <div className="fixed left-0 top-0 h-full w-64 text-white p-5 flex flex-col border-r border-r-text/30">
-      {/* Logo (mostrato al centro solo se non siamo nella pagina del profilo) */}
-      {!isProfilePage && (
+      {/* Logo (mostrato al centro solo se non siamo nella pagina del profilo o nella FirstPage) */}
+      {!isProfilePage && !isFirstPage && (
         <div className="flex justify-center">
           <Link to="/home">
             <img src={logo} alt="logo" className="w-40" />
@@ -34,12 +35,9 @@ const Sidebar = ({ userData, navItems, socialItems }) => {
             alt={userData.name}
             className="w-52 h-52 rounded-lg mx-auto"
           />
-        ) : (
+        ) : isFirstPage && (
           <>
-            <img src={logo} alt="logo" className="w-20 mx-auto mb-4" />
-            <div className="flex justify-center">
-              <LoginButton />
-            </div>
+            <img src={logo} alt="logo" className="w-30 mx-auto mb-4" />
           </>
         )}
       </div>
