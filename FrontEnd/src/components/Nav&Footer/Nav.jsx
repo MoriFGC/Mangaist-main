@@ -12,6 +12,7 @@ import { getUserById, getUserManga } from "../../services/api";
 import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 import BottomNav from "./BottomNav";
+import Footer from "./Footer";
 
 export default function Nav({ children }) {
   const { user: auth0User, isAuthenticated, logout } = useAuth0();
@@ -91,34 +92,41 @@ export default function Nav({ children }) {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row">
-      {/* Sidebar (visibile da 810px in su) */}
-      <div className="hidden md:block w-64 fixed h-full">
-        <Sidebar
-          userData={userData || auth0User}
-          navItems={navItems}
-          socialItems={socialItems}
-          location={location}
-        />
-      </div>
-
-      {/* Contenitore principale */}
-      <div className="flex-1 md:ml-64">
-        {/* Navigazione mobile (visibile fino a 809px) */}
-        <div className="md:hidden">
-          <MobileNav
+    <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col md:flex-row flex-grow">
+        {/* Sidebar (visibile da 810px in su) */}
+        <div className="hidden md:block w-64 fixed h-full">
+          <Sidebar
             userData={userData || auth0User}
             navItems={navItems}
             socialItems={socialItems}
             location={location}
           />
         </div>
-
-        {/* Outlet per il contenuto delle pagine */}
-        <main className="p-4 pb-24 md:pb-4">{typeof children === 'function' ? children({ updateUserData }) : children}</main>
-
-        {/* Aggiungiamo BottomNav qui */}
-        <BottomNav userData={userData || auth0User} userManga={userManga} onNewContentCreated={refreshUserData} />
+  
+        {/* Contenitore principale */}
+        <div className="flex-1 md:ml-64 flex flex-col">
+          {/* Navigazione mobile (visibile fino a 809px) */}
+          <div className="md:hidden">
+            <MobileNav
+              userData={userData || auth0User}
+              navItems={navItems}
+              socialItems={socialItems}
+              location={location}
+            />
+          </div>
+  
+          {/* Outlet per il contenuto delle pagine */}
+          <main className="flex-grow p-4 pb-24 md:pb-4">
+            {typeof children === 'function' ? children({ updateUserData }) : children}
+          </main>
+  
+          {/* Aggiungiamo BottomNav qui */}
+          <BottomNav userData={userData || auth0User} userManga={userManga} onNewContentCreated={refreshUserData} />
+          
+          {/* Footer */}
+          <Footer />
+        </div>
       </div>
     </div>
   );
