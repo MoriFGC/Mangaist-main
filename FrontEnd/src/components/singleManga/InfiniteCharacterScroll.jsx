@@ -28,7 +28,7 @@ const InfiniteCharacterScroll = ({ characters }) => {
   }, [scrollSpeed, characters]);
 
   if (!characters || characters.length === 0) {
-    return <div className="text-white">No characters available.</div>;
+    return <div className="text-white">Try add your favorite characters.</div>;
   }
 
   return (
