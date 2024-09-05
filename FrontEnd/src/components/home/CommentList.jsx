@@ -5,13 +5,13 @@ const CommentList = ({ panel }) => {
     console.log("Panel in CommentList:", panel);
 
     if (!panel) {
-      return <p className="text-gray-500">Caricamento commenti...</p>;
+      return <p className="text-gray-500">Loading Comments...</p>;
     }
   
     const comments = Array.isArray(panel.comments) ? panel.comments : [];
   
     if (comments.length === 0) {
-      return <p className="text-gray-500">Nessun commento disponibile.</p>;
+      return <p className="text-gray-500 m-3">There is no Comments.</p>;
     }
 
   return (

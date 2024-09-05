@@ -12,7 +12,7 @@ const ReadingManga = ({ manga }) => {
           <Link
             key={item._id}
             to={`/manga/${item._id}`}
-            className="flex items-center hover:bg-gray-800 p-2 rounded-lg transition duration-300"
+            className="flex items-center hover:bg-button-bg p-2 rounded-lg transition duration-300"
           >
             <img
               src={item.coverImage}
