@@ -7,6 +7,7 @@ const InfiniteCharacterScroll = ({ characters }) => {
   const containerRef = useRef(null);
 
   useEffect(() => {
+    console.log("Characters received:", characters); // Logging per debug
     const container = containerRef.current;
     if (!container) return;
 
@@ -24,7 +25,11 @@ const InfiniteCharacterScroll = ({ characters }) => {
     const intervalId = setInterval(animate, scrollSpeed);
 
     return () => clearInterval(intervalId);
-  }, [scrollSpeed]);
+  }, [scrollSpeed, characters]);
+
+  if (!characters || characters.length === 0) {
+    return <div className="text-white">No characters available.</div>;
+  }
 
   return (
     <div 
@@ -34,9 +39,9 @@ const InfiniteCharacterScroll = ({ characters }) => {
       onMouseLeave={() => setScrollSpeed(20)} // Velocità normale
     >
       <motion.div className="inline-flex">
-        {characters.concat(characters).map((character, index) => (
+        {characters.map((character, index) => (
           <motion.div
-            key={index}
+            key={character._id || `character-${index}`} // Usa l'ID del personaggio se disponibile
             className="w-48 mx-2 inline-block relative"
             onMouseEnter={() => setHoveredIndex(index)}
             onMouseLeave={() => setHoveredIndex(null)}

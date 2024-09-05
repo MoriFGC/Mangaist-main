@@ -130,8 +130,16 @@ export default function SingleManga() {
 
   // Gestore per l'aggiunta di un nuovo personaggio
   const handleCharacterAdded = async () => {
-    const response = await getMangaById(id);
-    setManga(response.data);
+    try {
+      const response = await getMangaById(id);
+      // Aggiorniamo lo stato del manga con i nuovi dati
+      setManga(response.data);
+      // Chiudiamo il dialog
+      setIsAddCharacterDialogOpen(false);
+      console.log("Manga updated after adding character:", response.data);
+    } catch (error) {
+      console.error("Error fetching updated manga data:", error);
+    }
   };
 
   // Mostra un indicatore di caricamento mentre i dati vengono recuperati
@@ -281,10 +289,7 @@ export default function SingleManga() {
         mangaId={manga._id}
         isOpen={isAddCharacterDialogOpen}
         onClose={() => setIsAddCharacterDialogOpen(false)}
-        onCharacterAdded={() => {
-          handleCharacterAdded();
-          setIsAddCharacterDialogOpen(false);
-        }}
+        onCharacterAdded={handleCharacterAdded} // Rimuoviamo la funzione anonima
       />
 
       {/* Dialog per modificare il manga */}

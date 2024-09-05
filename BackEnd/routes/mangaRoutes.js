@@ -163,7 +163,6 @@ router.patch('/:id/characters/:characterId', cloudinaryUploader.single('image'),
 });
 
 // POST aggiungi un nuovo personaggio con immagine
-// Modifica la rotta per l'aggiunta di un personaggio
 router.post('/:id/characters', cloudinaryUploader.single('image'), async (req, res) => {
   console.log('Received request to add character:');
   console.log('Body:', req.body);

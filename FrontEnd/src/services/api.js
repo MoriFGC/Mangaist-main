@@ -106,11 +106,17 @@ export const updateUserMangaProgress = async (userId, mangaId, progressData) => 
   }
 };
 // Character routes
-export const addCharacter = (mangaId, characterData) => {
-  return api.post(`/manga/${mangaId}/characters`, characterData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+export const addCharacter = async (mangaId, characterData) => {
+  try {
+    const response = await api.post(`/manga/${mangaId}/characters`, characterData);
+    console.log("API response for addCharacter:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error in addCharacter:", error);
+    throw error;
+  }
 };
+
 export const updateCharacter = (mangaId, characterId, characterData) => api.patch(`/manga/${mangaId}/characters/${characterId}`, characterData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });

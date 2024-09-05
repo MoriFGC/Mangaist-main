@@ -10,9 +10,12 @@ const AddCharacterForm = ({ mangaId, isOpen, onClose, onCharacterAdded }) => {
     description: "",
     image: null,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddCharacter = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append('name', newCharacter.name);
@@ -22,12 +25,13 @@ const AddCharacterForm = ({ mangaId, isOpen, onClose, onCharacterAdded }) => {
       }
       
       const response = await addCharacter(mangaId, formData);
-      console.log('Response:', response);
+      console.log("Character added successfully:", response);
       setNewCharacter({ name: "", description: "", image: null });
       onCharacterAdded();
-      onClose();
     } catch (error) {
       console.error("Error adding character:", error.response ? error.response.data : error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -35,7 +39,7 @@ const AddCharacterForm = ({ mangaId, isOpen, onClose, onCharacterAdded }) => {
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-black  p-6 text-left align-middle shadow-xl transition-all">
+        <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-black p-6 text-left align-middle shadow-xl transition-all">
           <DialogTitle as="h3" className="text-lg font-medium leading-6 text-white mb-4">
             Add New Character
           </DialogTitle>
@@ -72,7 +76,7 @@ const AddCharacterForm = ({ mangaId, isOpen, onClose, onCharacterAdded }) => {
               ></textarea>
             </div>
             <div className="mb-4">
-              <label htmlFor="image" className="block text-sm font-medium text-white mb-2 ">
+              <label htmlFor="image" className="block text-sm font-medium text-white mb-2">
                 Image
               </label>
               <input
@@ -87,8 +91,9 @@ const AddCharacterForm = ({ mangaId, isOpen, onClose, onCharacterAdded }) => {
               <button
                 type="submit"
                 className="border bg-white text-black hover:bg-black hover:text-white transition-all duration-300 ease-in-out font-bold py-2 px-4 rounded"
+                disabled={isSubmitting}
               >
-                Add Character
+                {isSubmitting ? 'Adding...' : 'Add Character'}
               </button>
             </div>
           </form>
