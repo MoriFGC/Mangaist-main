@@ -87,8 +87,6 @@ Mangaist è una piattaforma social dedicata agli appassionati di manga, che perm
 
 Abd Elrahman Mohamed - abdulmoha@outlook.it
 
-Link del Progetto: [https://github.com/tuousername/mangaist](https://github.com/tuousername/mangaist)
-
 ---
 
 Realizzato con ❤️ da Abd Elrahman Mohamed
